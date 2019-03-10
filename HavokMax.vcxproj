@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="2010|Win32">
+      <Configuration>2010</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2010|x64">
+      <Configuration>2010</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2011|Win32">
+      <Configuration>2011</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2011|x64">
+      <Configuration>2011</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2012|Win32">
+      <Configuration>2012</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2012|x64">
+      <Configuration>2012</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2013|Win32">
+      <Configuration>2013</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2013|x64">
+      <Configuration>2013</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2014|x64">
+      <Configuration>2014</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2015|x64">
+      <Configuration>2015</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2016|x64">
+      <Configuration>2016</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2017|x64">
+      <Configuration>2017</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2019|x64">
+      <Configuration>2019</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="2018|x64">
+      <Configuration>2018</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="3rd_party\HavokLib\3rd_party\PreCore\MAXex\win\About.rc" />
+    <ResourceCompile Include="import\HavokImp.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="3rd_party\HavokLib\3rd_party\PreCore\datas\esString.cpp" />
+    <ClCompile Include="DllEntry.cpp" />
+    <ClCompile Include="import\HavokImp.cpp" />
+    <ClCompile Include="import\HavokImport.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HavokMax.h" />
+    <ClInclude Include="import\HavokImport.h" />
+    <ClInclude Include="import\resource.h" />
+  </ItemGroup>
+  <PropertyGroup Label="MAXConfigurations">
+    <MaxSDK>C:\Program Files\Autodesk\3ds Max $(Configuration) SDK\maxsdk</MaxSDK>
+    <MaxDebugConfiguration>2017|x64</MaxDebugConfiguration>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6671F0BA-6FB8-4F35-8392-0676D05113A8}</ProjectGuid>
+    <RootNamespace>HavokMax</RootNamespace>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='$(MaxDebugConfiguration)'">true</PostBuildEventUseInBuild>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'!='$(MaxDebugConfiguration)'">false</PostBuildEventUseInBuild>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals" Condition="('$(Configuration)'=='2010' Or '$(Configuration)'=='2011' Or '$(Configuration)'=='2012' Or '$(Configuration)'=='2013') And '$(Platform)' == 'x64'">
+    <MaxSDKLibsRPath>/x64/lib</MaxSDKLibsRPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals" Condition="('$(Configuration)'=='2010' Or '$(Configuration)'=='2011' Or '$(Configuration)'=='2012' Or '$(Configuration)'=='2013') And '$(Platform)' == 'Win32'">
+    <MaxSDKLibsRPath>/lib</MaxSDKLibsRPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals" Condition="!('$(Configuration)'=='2010' Or '$(Configuration)'=='2011' Or '$(Configuration)'=='2012' Or '$(Configuration)'=='2013') And '$(Platform)' == 'x64'">
+    <MaxSDKLibsRPath>/lib/x64/Release</MaxSDKLibsRPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MaxSDKLibs>$(MaxSDK)$(MaxSDKLibsRPath)</MaxSDKLibs>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet Condition="('$(Configuration)'=='2010' Or '$(Configuration)'=='2011' Or '$(Configuration)'=='2012')">NotSet</CharacterSet>
+    <CharacterSet Condition="!('$(Configuration)'=='2010' Or '$(Configuration)'=='2011' Or '$(Configuration)'=='2012')">Unicode</CharacterSet>
+    <OutDir>Bin\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>ObjDump\$(Platform)_$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_USRDLL;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_WINDOWS=0x0601;_WIN32_IE=0x0800;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_SCL_SECURE_NO_DEPRECATE;ISOLATION_AWARE_ENABLED=1;MODULE_NAME=$(TargetFileName);BUILDVERSION=$(Configuration);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>3rd_party/HavokLib/include;$(MaxSDK)\include;3rd_party/HavokLib/3rd_party/PreCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/GR /w34996 /we4706 /we4390 /we4557 /we4546 /we4545 /we4295 /we4310 /we4130 /we4611 /we4213 /we4121 /we4715 /w34701 /w34265 /wd4244 /wd4018 /wd4819</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>3rd_party/HavokLib/lib/$(Platform)_Release;$(MaxSDKLibs);$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>gdiplus.lib;HavokLib.lib;bmm.lib;core.lib;flt.lib;mesh.lib;maxutil.lib;maxscrpt.lib;paramblk2.lib;geom.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
+      <ModuleDefinitionFile>HavokMax.def</ModuleDefinitionFile>
+      <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
+      <OutputFile>$(OutDir)$(TargetName).dlu</OutputFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>COPY /Y /V "$(OutDir)$(TargetName).dlu" /B "C:\Program Files\Autodesk\3ds Max $(Configuration)\Plugins\" /B</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,3 @@
+[submodule "3rd_party/HavokLib"]
+	path = 3rd_party/HavokLib
+	url = https://github.com/PredatorCZ/HavokLib.git

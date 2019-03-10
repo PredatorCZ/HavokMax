@@ -1,0 +1,226 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Czech (Czech Republic) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+#pragma code_page(1250)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_NEWPRESET DIALOGEX 0, 0, 175, 47
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Name new preset"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,63,30,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,120,30,50,14
+    LTEXT           "Preset Name",IDC_STATIC,6,3,42,8
+    COMBOBOX        IDC_CB_NEWPRESET,6,12,108,12,CBS_SIMPLE | WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_NEWPRESET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 168
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 40
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_NEWPRESET AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "sanityBulbs.bmp"
+
+#endif    // Czech (Czech Republic) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_PANEL DIALOGEX 0, 0, 123, 140
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_RB_XX,"Button",BS_AUTORADIOBUTTON | WS_GROUP,45,42,8,9
+    CONTROL         "",IDC_RB_XY,"Button",BS_AUTORADIOBUTTON,57,42,8,9
+    CONTROL         "",IDC_RB_XZ,"Button",BS_AUTORADIOBUTTON,69,42,8,9
+    CONTROL         "",IDC_RB_YX,"Button",BS_AUTORADIOBUTTON | WS_GROUP,45,55,8,9
+    CONTROL         "",IDC_RB_YY,"Button",BS_AUTORADIOBUTTON,57,55,8,9
+    CONTROL         "",IDC_RB_YZ,"Button",BS_AUTORADIOBUTTON,69,55,8,9
+    CONTROL         "",IDC_RB_ZX,"Button",BS_AUTORADIOBUTTON | WS_GROUP,45,66,8,9
+    CONTROL         "",IDC_RB_ZY,"Button",BS_AUTORADIOBUTTON,57,66,8,9
+    CONTROL         "",IDC_RB_ZZ,"Button",BS_AUTORADIOBUTTON,69,66,8,9
+    CONTROL         "",IDC_EDIT_SCALE,"CustEdit",WS_TABSTOP,45,6,35,10
+    CONTROL         "",IDC_SPIN_SCALE,"SpinnerControl",0x0,81,6,7,10
+    CONTROL         "",IDC_CH_ROWX,"Button",BS_AUTOCHECKBOX | BS_BITMAP | BS_VCENTER | WS_TABSTOP,81,42,8,10
+    CONTROL         "",IDC_CH_ROWY,"Button",BS_AUTOCHECKBOX | BS_BITMAP | BS_VCENTER | WS_TABSTOP,81,55,8,10
+    CONTROL         "",IDC_CH_ROWZ,"Button",BS_AUTOCHECKBOX | BS_BITMAP | BS_VCENTER | WS_TABSTOP,81,66,8,10
+    LTEXT           "Scale:",IDC_STATIC,9,6,21,8
+    LTEXT           "Matrix remap:",IDC_STATIC,9,22,43,8
+    LTEXT           "Row X",IDC_STATIC,18,42,22,8
+    LTEXT           "Row Y",IDC_STATIC,18,54,22,8
+    LTEXT           "Row Z",IDC_STATIC,18,66,22,8
+    LTEXT           "X",IDC_STATIC,45,33,8,8
+    LTEXT           "Y",IDC_STATIC,57,33,8,8
+    LTEXT           "Z",IDC_STATIC,69,33,8,8
+    LTEXT           "Invert",IDC_STATIC,81,33,19,8
+    COMBOBOX        IDC_CB_PRESET,6,99,111,150,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Save",IDC_BT_SAVEPRESET,51,81,39,14,NOT WS_VISIBLE
+    PUSHBUTTON      "+",IDC_BT_ADDPRESET,9,81,18,14
+    PUSHBUTTON      "Import",IDC_BT_DONE,6,123,45,14
+    PUSHBUTTON      "Cancel",IDC_BT_CANCEL,72,123,45,14
+    PUSHBUTTON      "?",IDC_BT_ABOUT,54,123,15,14
+    PUSHBUTTON      "-",IDC_BT_DELETEPRESET,30,81,18,14
+    CONTROL         IDB_BITMAP1,IDC_PC_INVERT,"Static",SS_BITMAP,103,35,16,5
+    CONTROL         IDB_BITMAP1,IDC_PC_ROWX,"Static",SS_BITMAP,92,44,16,5
+    CONTROL         IDB_BITMAP1,IDC_PC_ROWY,"Static",SS_BITMAP,92,57,16,5
+    CONTROL         IDB_BITMAP1,IDC_PC_ROWZ,"Static",SS_BITMAP,92,68,16,5
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_PANEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 116
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 133
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_PANEL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_CLASS_NAME          "HavokImp"
+    IDS_PARAMS              "Parameters"
+    IDS_SPIN                "Spin"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
