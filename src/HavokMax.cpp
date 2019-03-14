@@ -17,12 +17,27 @@
 	Havok Tool uses HavokLib 2016-2019 Lukas Cone
 */
 
-#include "HavokImport.h"
+#include "HavokMax.h"
+#include "resource.h"
 #include <commctrl.h>
 #include <IPathConfigMgr.h>
 #include <3dsmaxport.h>
 #include <iparamm2.h>
 #include "datas/DirectoryScanner.hpp"
+#include <array>
+
+static const std::array<const TCHAR *, 9> toolsetNames =
+{
+	_T("5.5.0"),
+	_T("6.6.0"),
+	_T("7.1.0"),
+	_T("2010.2"),
+	_T("2011.1"),
+	_T("2011.2"),
+	_T("2012.2"),
+	_T("2013.1"),
+	_T("2014.1"),
+};
 
 struct PresetData
 {
@@ -44,9 +59,9 @@ static HBITMAP bitmapGreen,
 	bitmapRed,
 	bitmapGray;
 
-const TCHAR _name[] = _T("Havok Import Tool");
+const TCHAR _name[] = _T("Havok Tool");
 const TCHAR _info[] = _T("\nCopyright (C) 2016-2019 Lukas Cone\nVersion 1");
-const TCHAR _license[] = _T("Havok Import Tool uses HavokLib, Copyright(C) 2016-2019 Lukas Cone.");
+const TCHAR _license[] = _T("Havok Tool uses HavokLib, Copyright(C) 2016-2019 Lukas Cone.");
 #pragma message("ADD LINK")
 const TCHAR _homePage[] = _T("https://lukascone.wordpress.com/2019/02/22/apex-engine-plugin");
 
@@ -127,7 +142,7 @@ void Rescan()
 	}
 }
 
-void BuildHavokImpResources()
+void BuildHavokResources()
 {
 	HBITMAP bitmapBulbs = LoadBitmap(hInstance, MAKEINTRESOURCE(IDB_BITMAP1));
 	HIMAGELIST images = ImageList_Create(8, 8, 0, 0, 1);
@@ -150,7 +165,7 @@ void BuildHavokImpResources()
 	ImageList_Destroy(images);
 }
 
-void DestroyHavokImpResources()
+void DestroyHavokResources()
 {
 	for (auto &f : presets)
 		if (f != &defaultPreset)
@@ -161,11 +176,11 @@ void DestroyHavokImpResources()
 	DeleteObject(bitmapGray);
 }
 
-HavokImport::HavokImport() :
+HavokMax::HavokMax() :
 	CFGFile(nullptr), hWnd(nullptr), comboHandle(nullptr), currentPresetName(_T("Default")),
-	IDConfigValue(IDC_EDIT_SCALE)(1.0f) { corMat.IdentityMatrix(); }
+	IDConfigValue(IDC_EDIT_SCALE)(1.0f), instanceDialogType(DLGTYPE_unknown), IDConfigIndex(IDC_CB_TOOLSET)(0) { corMat.IdentityMatrix(); }
 
-void HavokImport::BuildCFG()
+void HavokMax::BuildCFG()
 {
 	cfgpath = IPathConfigMgr::GetPathConfigMgr()->GetDir(APP_PLUGCFG_DIR);
 	cfgpath.append(_T("\\HavokImpSettings.ini"));
@@ -173,7 +188,7 @@ void HavokImport::BuildCFG()
 }
 static const TCHAR *hkPresetHeader = _T("HK_PRESETS_HEADER");
 
-void HavokImport::LoadCFG()
+void HavokMax::LoadCFG()
 {
 	BuildCFG();
 	TCHAR buffer[CFGBufferSize];
@@ -210,9 +225,11 @@ void HavokImport::LoadCFG()
 		if (pushNew)
 			presets.push_back(data);
 	}
+
+	GetCFGIndex(IDC_CB_TOOLSET);
 }
 
-void HavokImport::SaveCFG()
+void HavokMax::SaveCFG()
 {
 	BuildCFG();
 	TCHAR buffer[CFGBufferSize];
@@ -238,9 +255,11 @@ void HavokImport::SaveCFG()
 		}
 
 	WriteIndex(hkPresetHeader, numUserPresets, CFGFile, buffer, _T("numUserPresets"));
+
+	SetCFGIndex(IDC_CB_TOOLSET);
 }
 
-void HavokImport::CollisionHandler()
+void HavokMax::CollisionHandler()
 {
 	if (
 		(IsDlgButtonChecked(hWnd, IDC_RB_XX) && (IsDlgButtonChecked(hWnd, IDC_RB_YX) || IsDlgButtonChecked(hWnd, IDC_RB_ZX))) ||
@@ -292,7 +311,7 @@ void HavokImport::CollisionHandler()
 	SendDlgItemMessage(hWnd, IDC_PC_INVERT, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(checkedStatus ? bitmapRed : bitmapGreen));
 }
 
-int HavokImport::SanityBitcher()
+int HavokMax::SanityBitcher()
 {
 	const int insane = reinterpret_cast<decltype(sanityCheck)::ValueType&>(sanityCheck);
 
@@ -327,7 +346,7 @@ int HavokImport::SanityBitcher()
 	return insane;
 }
 
-int HavokImport::SavePreset(const TCHAR* presetName)
+int HavokMax::SavePreset(const TCHAR* presetName)
 {
 	PresetData *data = nullptr;
 
@@ -354,7 +373,7 @@ int HavokImport::SavePreset(const TCHAR* presetName)
 	return SavePreset(data);
 }
 
-int HavokImport::SavePreset(PresetData* data)
+int HavokMax::SavePreset(PresetData* data)
 {
 	if (data->external)
 	{
@@ -395,7 +414,7 @@ static const int toEnableItems[] = {
 	IDC_RB_XX, IDC_RB_XY, IDC_RB_XZ, IDC_RB_YX, IDC_RB_YY, IDC_RB_YZ, IDC_RB_ZX, IDC_RB_ZY,
 	IDC_RB_ZZ, IDC_CH_ROWX, IDC_CH_ROWY, IDC_CH_ROWZ, IDC_SPIN, IDC_SPIN_SCALE };
 
-void HavokImport::UpdatePresetUI(PresetData* data)
+void HavokMax::UpdatePresetUI(PresetData* data)
 {
 	corMat = data->corMat;
 	IDC_EDIT_SCALE_value = data->scale;
@@ -440,7 +459,7 @@ void HavokImport::UpdatePresetUI(PresetData* data)
 	SendDlgItemMessage(hWnd, IDC_PC_ROWZ, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[3] ? bitmapRed : bitmapGreen) : bitmapGray));
 }
 
-void HavokImport::UpdateData()
+void HavokMax::UpdateData()
 {
 	const LRESULT curSel = SendMessage(comboHandle, CB_GETCURSEL, 0, 0);
 
@@ -482,7 +501,7 @@ INT_PTR CALLBACK NewPresetDLG(HWND hWnd, UINT message, WPARAM wParam, LPARAM)
 
 INT_PTR CALLBACK DialogCallbacks(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	HavokImport *imp = reinterpret_cast<HavokImport*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	HavokMax *imp = reinterpret_cast<HavokMax*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
 	switch (message)
 	{
@@ -490,7 +509,7 @@ INT_PTR CALLBACK DialogCallbacks(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	{
 		CenterWindow(hWnd, GetParent(hWnd));
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
-		imp = reinterpret_cast<HavokImport*>(lParam);
+		imp = reinterpret_cast<HavokMax*>(lParam);
 		imp->hWnd = hWnd;
 		imp->comboHandle = GetDlgItem(hWnd, IDC_CB_PRESET);
 		imp->LoadCFG();
@@ -504,7 +523,21 @@ INT_PTR CALLBACK DialogCallbacks(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 		imp->UpdatePresetUI(presets[reslt]);
 
-		SetWindowText(hWnd, _T("Havok Import v1"));
+		if (imp->instanceDialogType == HavokMax::DLGTYPE_import)
+			SetWindowText(hWnd, _T("Havok Import v1"));
+		else if (imp->instanceDialogType == HavokMax::DLGTYPE_export)
+		{
+			SetWindowText(hWnd, _T("Havok Export v1"));
+
+			HWND comboItem = GetDlgItem(hWnd, IDC_CB_TOOLSET);
+
+			for (auto &t : toolsetNames)
+				SendMessage(comboItem, CB_ADDSTRING, 0, (LPARAM)t);
+
+			SendMessage(comboItem, CB_SETCURSEL, imp->IDC_CB_TOOLSET_index, 0);
+
+		}
+
 		return TRUE;
 	}
 	case WM_CLOSE:
@@ -594,14 +627,29 @@ INT_PTR CALLBACK DialogCallbacks(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			{
 			case CBN_SELCHANGE:
 			{
-				const LRESULT curSel = SendMessage(imp->comboHandle, CB_GETCURSEL, 0, 0);
+				const LRESULT curSel = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
 				imp->UpdatePresetUI(presets[curSel]);
 				return TRUE;
 			}
+			break;
+			}
+		break;
+		}
+
+		case IDC_CB_TOOLSET:
+		{
+			switch (HIWORD(wParam))
+			{
+			case CBN_SELCHANGE:
+			{
+				const LRESULT curSel = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
+				imp->IDC_CB_TOOLSET_index = curSel;
+				return TRUE;
 			}
 			break;
-		}
+			}
 		break;
+		}
 		}
 
 		case CC_SPINNER_CHANGE:
@@ -616,7 +664,14 @@ INT_PTR CALLBACK DialogCallbacks(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	return (INT_PTR)FALSE;
 }
 
-int HavokImport::SpawnDialog()
+int HavokMax::SpawnImportDialog()
 {
-	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_PANEL), GetActiveWindow(), DialogCallbacks, reinterpret_cast<LPARAM>(this));
+	instanceDialogType = DLGTYPE_import;
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_IMPORT), GetActiveWindow(), DialogCallbacks, reinterpret_cast<LPARAM>(this));
+}
+
+int HavokMax::SpawnExportDialog()
+{
+	instanceDialogType = DLGTYPE_export;
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_EXPORT), GetActiveWindow(), DialogCallbacks, reinterpret_cast<LPARAM>(this));
 }

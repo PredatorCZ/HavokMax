@@ -17,21 +17,18 @@
 	Havok Tool uses HavokLib 2016-2019 Lukas Cone
 */
 
-#include "../HavokMax.h"
-#include "HavokImport.h"
-#include "HavokApi.hpp"
+#include "HavokMax.h"
 #include "datas/esstring.h"
-#include "datas/DirectoryScanner.hpp"
-#include <IPathConfigMgr.h>
 
-#define HavokImp_CLASS_ID	Class_ID(0xad115395, 0x924c02c0)
+#define HavokImport_CLASS_ID	Class_ID(0xad115395, 0x924c02c0)
+static const TCHAR _className[] = _T("HavokImport");
 
-class HavokImp : public SceneImport, HavokImport
+class HavokImport : public SceneImport, HavokMax
 {
 public:
 	//Constructor/Destructor
-	HavokImp();
-	virtual ~HavokImp() {}
+	HavokImport();
+	virtual ~HavokImport() {}
 
 	virtual int				ExtCount();					// Number of extensions supported
 	virtual const TCHAR *	Ext(int n);					// Extension #n (i.e. "3DS")
@@ -52,69 +49,69 @@ class : public ClassDesc2
 {
 public:
 	virtual int				IsPublic() 		{ return TRUE; }
-	virtual void *			Create(BOOL) 	{ return new HavokImp(); }
-	virtual const TCHAR *	ClassName() 	{ return GetString(IDS_CLASS_NAME); }
+	virtual void *			Create(BOOL) 	{ return new HavokImport(); }
+	virtual const TCHAR *	ClassName() 	{ return _className; }
 	virtual SClass_ID		SuperClassID() 	{ return SCENE_IMPORT_CLASS_ID; }
-	virtual Class_ID		ClassID() 		{ return HavokImp_CLASS_ID; }
-	virtual const TCHAR *	Category() 		{ return GetString(IDS_CATEGORY); }
-	virtual const TCHAR *	InternalName() 	{ return _T("HavokImp"); }
+	virtual Class_ID		ClassID() 		{ return HavokImport_CLASS_ID; }
+	virtual const TCHAR *	Category() 		{ return NULL; }
+	virtual const TCHAR *	InternalName() 	{ return _className; }
 	virtual HINSTANCE		HInstance() 	{ return hInstance; }
-}HavokImpDesc;
+}HavokImportDesc;
 
-ClassDesc2* GetHavokImpDesc() { return &HavokImpDesc; }
+ClassDesc2* GetHavokImportDesc() { return &HavokImportDesc; }
 
 //--- HavokImp -------------------------------------------------------
-HavokImp::HavokImp()
+HavokImport::HavokImport()
 {
 	Rescan();
 }
 
-int HavokImp::ExtCount()
+int HavokImport::ExtCount()
 {
 	return static_cast<int>(extensions.size());
 }
 
-const TCHAR *HavokImp::Ext(int n)
+const TCHAR *HavokImport::Ext(int n)
 {
 	return extensions[n].c_str();
 }
 
-const TCHAR *HavokImp::LongDesc()
+const TCHAR *HavokImport::LongDesc()
 {
 	return _T("Havok Import");
 }
 
-const TCHAR *HavokImp::ShortDesc()
+const TCHAR *HavokImport::ShortDesc()
 {
 	return _T("Havok Import");
 }
 
-const TCHAR *HavokImp::AuthorName()
+const TCHAR *HavokImport::AuthorName()
 {
 	return _T("Lukas Cone");
 }
 
-const TCHAR *HavokImp::CopyrightMessage()
+const TCHAR *HavokImport::CopyrightMessage()
 {
 	return _T("Copyright (C) 2016-2019 Lukas Cone");
 }
 
-const TCHAR *HavokImp::OtherMessage1() 
+const TCHAR *HavokImport::OtherMessage1() 
 {		
 	return _T("");
 }
 
-const TCHAR *HavokImp::OtherMessage2() 
+const TCHAR *HavokImport::OtherMessage2() 
 {		
 	return _T("");
 }
 
-unsigned int HavokImp::Version()
+unsigned int HavokImport::Version()
 {				
 	return 100;
 }
 
-void HavokImp::ShowAbout(HWND hWnd)
+void HavokImport::ShowAbout(HWND hWnd)
 {
 	ShowAboutDLG(hWnd);
 }
@@ -122,7 +119,7 @@ void HavokImp::ShowAbout(HWND hWnd)
 static const MSTR skelNameHint = _T("hkaSkeleton");
 static const MSTR boneNameHint = _T("hkaBone");
 
-void HavokImp::LoadSkeleton(const hkaSkeleton &skel)
+void HavokImport::LoadSkeleton(const hkaSkeleton &skel)
 {
 	std::vector<INode*> nodes;
 	int currentBone = 0;
@@ -162,10 +159,10 @@ void HavokImp::LoadSkeleton(const hkaSkeleton &skel)
 	}
 }
 
-int HavokImp::DoImport(const TCHAR* filename, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
+int HavokImport::DoImport(const TCHAR* filename, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
 {
 	if (!suppressPrompts)
-		if (!SpawnDialog())
+		if (!SpawnImportDialog())
 			return TRUE;
 
 	IhkPackFile *pFile = IhkPackFile::Create(filename);

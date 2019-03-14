@@ -18,13 +18,12 @@
 */
 
 #include "HavokMax.h"
-#include "HavokApi.hpp"
-#include "import/HavokImport.h"
 #include <gdiplus.h>
 #include "datas/MasterPrinter.hpp"
 #include <maxscript/maxscript.h>
 
-extern ClassDesc2* GetHavokImpDesc();
+extern ClassDesc2* GetHavokImportDesc();
+extern ClassDesc2 *GetHavokExportDesc();
 
 HINSTANCE hInstance;
 int controlsInit = FALSE;
@@ -61,14 +60,15 @@ __declspec( dllexport ) const TCHAR* LibDescription()
 //TODO: Must change this number when adding a new class
 __declspec( dllexport ) int LibNumberClasses()
 {
-	return 1;
+	return 2;
 }
 
 // This function returns the number of plug-in classes this DLL
 __declspec( dllexport ) ClassDesc* LibClassDesc(int i)
 {
 	switch(i) {
-		case 0: return GetHavokImpDesc();
+		case 0: return GetHavokImportDesc();
+		case 1: return GetHavokExportDesc();
 		default: return 0;
 	}
 }
@@ -94,10 +94,9 @@ void PrintLog(TCHAR* msg)
 // on your DLL, and send you a message.
 __declspec( dllexport ) int LibInitialize(void)
 {
-	InitializeHavokRegistry();
 	printer.AddPrinterFunction(PrintLog);
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	BuildHavokImpResources();
+	BuildHavokResources();
 	return TRUE;
 }
 
@@ -107,7 +106,7 @@ __declspec( dllexport ) int LibInitialize(void)
 __declspec( dllexport ) int LibShutdown(void)
 {
 	Gdiplus::GdiplusShutdown(gdiplusToken);
-	DestroyHavokImpResources();
+	DestroyHavokResources();
 	return TRUE;
 }
 

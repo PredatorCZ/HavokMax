@@ -60,18 +60,21 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="3rd_party\HavokLib\3rd_party\PreCore\MAXex\win\About.rc" />
-    <ResourceCompile Include="import\HavokImp.rc" />
+    <ResourceCompile Include="src\HavokMax.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd_party\HavokLib\3rd_party\PreCore\datas\esString.cpp" />
-    <ClCompile Include="DllEntry.cpp" />
-    <ClCompile Include="import\HavokImp.cpp" />
-    <ClCompile Include="import\HavokImport.cpp" />
+    <ClCompile Include="src\DllEntry.cpp" />
+    <ClCompile Include="src\HavokExport.cpp" />
+    <ClCompile Include="src\HavokImport.cpp" />
+    <ClCompile Include="src\HavokMax.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HavokMax.h" />
-    <ClInclude Include="import\HavokImport.h" />
-    <ClInclude Include="import\resource.h" />
+    <ClInclude Include="src\HavokMax.h" />
+    <ClInclude Include="src\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\sanityBulbs.bmp" />
   </ItemGroup>
   <PropertyGroup Label="MAXConfigurations">
     <MaxSDK>C:\Program Files\Autodesk\3ds Max $(Configuration) SDK\maxsdk</MaxSDK>
@@ -134,7 +137,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
-      <ModuleDefinitionFile>HavokMax.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>src/HavokMax.def</ModuleDefinitionFile>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <OutputFile>$(OutDir)$(TargetName).dlu</OutputFile>
     </Link>
