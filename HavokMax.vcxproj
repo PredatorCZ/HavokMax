@@ -74,6 +74,8 @@
     <ClInclude Include="src\resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="src\axis.bmp" />
+    <Image Include="src\error.bmp" />
     <Image Include="src\sanityBulbs.bmp" />
   </ItemGroup>
   <PropertyGroup Label="MAXConfigurations">

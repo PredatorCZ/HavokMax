@@ -23,7 +23,7 @@
 #define HavokImport_CLASS_ID	Class_ID(0xad115395, 0x924c02c0)
 static const TCHAR _className[] = _T("HavokImport");
 
-class HavokImport : public SceneImport, HavokMax
+class HavokImport : public SceneImport, HavokMaxV2
 {
 public:
 	//Constructor/Destructor

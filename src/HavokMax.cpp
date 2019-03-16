@@ -226,6 +226,9 @@ void HavokMax::LoadCFG()
 			presets.push_back(data);
 	}
 
+	GetValue(defaultPreset.name.c_str(), defaultPreset.scale, CFGFile, buffer, _T("Scale"));
+	GetCorrectionMatrix(defaultPreset.corMat, CFGFile, buffer, defaultPreset.name.c_str());
+
 	GetCFGIndex(IDC_CB_TOOLSET);
 }
 
@@ -259,7 +262,292 @@ void HavokMax::SaveCFG()
 	SetCFGIndex(IDC_CB_TOOLSET);
 }
 
-void HavokMax::CollisionHandler()
+int HavokMax::SavePreset(const TCHAR* presetName)
+{
+	PresetData *data = nullptr;
+
+	for (auto &p : presets)
+		if (*p == presetName)
+		{
+			data = p;
+			break;
+		}
+
+	if (data)
+	{
+		MessageBox(hWnd, _T("Creation of duplicate presets is not allowed.\nPlease choose a diferent name."), _T("Cannot save preset"), MB_ICONSTOP);
+		return 1;
+	}
+
+	if (!data)
+	{
+		data = new PresetData();
+		data->name = presetName;
+		presets.push_back(data);
+	}
+
+	return SavePreset(data);
+}
+
+void HavokMax::UpdateData()
+{
+	const LRESULT curSel = SendMessage(comboHandle, CB_GETCURSEL, 0, 0);
+
+	SavePreset(presets[curSel]);
+
+	corMat = presets[curSel]->corMat;
+}
+
+void HavokMax::Setup(HWND hwnd)
+{
+	hWnd = hwnd;
+	comboHandle = GetDlgItem(hwnd, IDC_CB_PRESET);
+}
+
+INT_PTR CALLBACK NewPresetDLG(HWND hWnd, UINT message, WPARAM wParam, LPARAM)
+{
+	switch (message)
+	{
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+		{
+			HWND comboHandle = GetDlgItem(hWnd, IDC_CB_NEWPRESET);
+			const int textLen = GetWindowTextLength(comboHandle) + 1;
+
+			if (textLen == 1)
+			{
+				EndDialog(hWnd, NULL);
+				return TRUE;
+			}
+
+			TCHAR *textData = static_cast<TCHAR*>(malloc(sizeof(TCHAR) * textLen));
+			GetWindowText(comboHandle, textData, textLen);
+			EndDialog(hWnd, reinterpret_cast<INT_PTR>(textData));
+			return TRUE;
+		}
+		case IDCANCEL:
+			EndDialog(hWnd, NULL);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+INT_PTR CALLBACK DialogCallbacksMain(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	HavokMax *imp = reinterpret_cast<HavokMax *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+	switch (message)
+	{
+	case WM_INITDIALOG:
+	{
+		CenterWindow(hWnd, GetParent(hWnd));
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
+		imp = reinterpret_cast<HavokMax *>(lParam);
+		imp->Setup(hWnd);
+		imp->LoadCFG();
+
+		for (auto &p : presets)
+			SendMessage(imp->comboHandle, CB_ADDSTRING, 0, (LPARAM)p->name.c_str());
+
+		LRESULT reslt = SendMessage(imp->comboHandle, CB_SELECTSTRING, 0, (LPARAM)imp->currentPresetName.c_str());
+		reslt = reslt > 0 ? reslt : 0;
+
+		SendMessage(imp->comboHandle, CB_SETCURSEL, reslt, 0);
+
+		imp->UpdatePresetUI(presets[reslt]);
+
+		if (imp->instanceDialogType == HavokMax::DLGTYPE_import)
+			SetWindowText(hWnd, _T("Havok Import v1"));
+		else if (imp->instanceDialogType == HavokMax::DLGTYPE_export)
+		{
+			SetWindowText(hWnd, _T("Havok Export v1"));
+
+			HWND comboItem = GetDlgItem(hWnd, IDC_CB_TOOLSET);
+
+			for (auto &t : toolsetNames)
+				SendMessage(comboItem, CB_ADDSTRING, 0, (LPARAM)t);
+
+			SendMessage(comboItem, CB_SETCURSEL, imp->IDC_CB_TOOLSET_index, 0);
+		}
+
+		return TRUE;
+	}
+	case WM_CLOSE:
+		imp->SaveCFG();
+		EndDialog(hWnd, 0);
+		return TRUE;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_BT_DONE:
+			if (!imp->SanityBitcher())
+			{
+				imp->SaveCFG();
+				EndDialog(hWnd, 1);
+			}
+			return TRUE;
+		case IDC_BT_ABOUT:
+			ShowAboutDLG(hWnd);
+			return TRUE;
+		case IDC_BT_CANCEL:
+			EndDialog(hWnd, 0);
+			return TRUE;
+
+		case IDC_BT_SAVEPRESET:
+			imp->SaveCFG();
+			return TRUE;
+
+		case IDC_BT_ADDPRESET:
+		{
+			if (!imp->SanityBitcher())
+			{
+				TCHAR *textData = reinterpret_cast<TCHAR *>(DialogBox(hInstance, MAKEINTRESOURCE(IDD_NEWPRESET), hWnd, NewPresetDLG));
+
+				if (textData)
+				{
+					if (!imp->SavePreset(textData))
+					{
+						const LRESULT relt = SendMessage(imp->comboHandle, CB_ADDSTRING, 0, (LPARAM)textData);
+						SendMessage(imp->comboHandle, CB_SETCURSEL, relt, 0);
+						imp->UpdatePresetUI(presets[relt]);
+					}
+
+					free(textData);
+				}
+				imp->SaveCFG();
+			}
+			return TRUE;
+		}
+		case IDC_BT_DELETEPRESET:
+		{
+			const LRESULT curSel = SendMessage(imp->comboHandle, CB_GETCURSEL, 0, 0);
+
+			if (curSel > 0 && !presets[curSel]->external)
+			{
+				SendMessage(imp->comboHandle, CB_DELETESTRING, curSel, 0);
+				SendMessage(imp->comboHandle, CB_SETCURSEL, curSel - 1, 0);
+				imp->UpdatePresetUI(presets[curSel - 1]);
+
+				WritePrivateProfileString(presets[curSel]->name.c_str(), NULL, NULL, imp->CFGFile);
+				delete presets[curSel];
+				presets.erase(presets.begin() + curSel);
+			}
+			imp->SaveCFG();
+			return TRUE;
+		}
+
+		case IDC_CB_PRESET:
+		{
+			switch (HIWORD(wParam))
+			{
+			case CBN_SELCHANGE:
+			{
+				const LRESULT curSel = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
+				imp->UpdatePresetUI(presets[curSel]);
+				return TRUE;
+			}
+			break;
+			}
+			break;
+		}
+
+		case IDC_CB_TOOLSET:
+		{
+			switch (HIWORD(wParam))
+			{
+			case CBN_SELCHANGE:
+			{
+				const LRESULT curSel = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
+				imp->IDC_CB_TOOLSET_index = curSel;
+				return TRUE;
+			}
+			break;
+			}
+			break;
+		}
+		default:
+			return imp->DlgCommandCallBack(wParam, lParam);
+		}
+
+	case CC_SPINNER_CHANGE:
+		switch (LOWORD(wParam))
+		{
+		case IDC_SPIN_SCALE:
+			imp->IDC_EDIT_SCALE_value = reinterpret_cast<ISpinnerControl *>(lParam)->GetFVal();
+			imp->UpdateData();
+			break;
+		}
+	}
+	return (INT_PTR)FALSE;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// HavokMaxV1
+
+static const int toEnableItemsV1[] = {
+	IDC_RB_XX, IDC_RB_XY, IDC_RB_XZ, IDC_RB_YX, IDC_RB_YY, IDC_RB_YZ, IDC_RB_ZX, IDC_RB_ZY,
+	IDC_RB_ZZ, IDC_CH_ROWX, IDC_CH_ROWY, IDC_CH_ROWZ, IDC_SPIN, IDC_SPIN_SCALE };
+
+void HavokMaxV1::UpdatePresetUI(PresetData *data)
+{
+	corMat = data->corMat;
+	IDC_EDIT_SCALE_value = data->scale;
+
+	SetupFloatSpinner(hWnd, IDC_SPIN_SCALE, IDC_EDIT_SCALE, 0, 5000, IDC_EDIT_SCALE_value);
+
+	if (data->corMat.GetRow(0)[0])
+		CheckRadioButton(hWnd, IDC_RB_XX, IDC_RB_XZ, IDC_RB_XX);
+	else if (data->corMat.GetRow(0)[1])
+		CheckRadioButton(hWnd, IDC_RB_XX, IDC_RB_XZ, IDC_RB_XY);
+	else if (data->corMat.GetRow(0)[2])
+		CheckRadioButton(hWnd, IDC_RB_XX, IDC_RB_XZ, IDC_RB_XZ);
+
+	if (data->corMat.GetRow(1)[0])
+		CheckRadioButton(hWnd, IDC_RB_YZ, IDC_RB_YX, IDC_RB_YX);
+	else if (data->corMat.GetRow(1)[1])
+		CheckRadioButton(hWnd, IDC_RB_YZ, IDC_RB_YX, IDC_RB_YY);
+	else if (data->corMat.GetRow(1)[2])
+		CheckRadioButton(hWnd, IDC_RB_YZ, IDC_RB_YX, IDC_RB_YZ);
+
+	if (data->corMat.GetRow(2)[0])
+		CheckRadioButton(hWnd, IDC_RB_ZX, IDC_RB_ZZ, IDC_RB_ZX);
+	else if (data->corMat.GetRow(2)[1])
+		CheckRadioButton(hWnd, IDC_RB_ZX, IDC_RB_ZZ, IDC_RB_ZY);
+	else if (data->corMat.GetRow(2)[2])
+		CheckRadioButton(hWnd, IDC_RB_ZX, IDC_RB_ZZ, IDC_RB_ZZ);
+
+	CheckDlgButton(hWnd, IDC_CH_ROWX, (data->corMat.GetRow(0)[0] + data->corMat.GetRow(0)[1] + data->corMat.GetRow(0)[2]) < 0);
+	CheckDlgButton(hWnd, IDC_CH_ROWY, (data->corMat.GetRow(1)[0] + data->corMat.GetRow(1)[1] + data->corMat.GetRow(1)[2]) < 0);
+	CheckDlgButton(hWnd, IDC_CH_ROWZ, (data->corMat.GetRow(2)[0] + data->corMat.GetRow(2)[1] + data->corMat.GetRow(2)[2]) < 0);
+
+	CollisionHandler();
+
+	const int bruh = sizeof(toEnableItemsV1) / 4;
+
+	for (int it = 0; it < bruh; it++)
+		EnableWindow(GetDlgItem(hWnd, toEnableItemsV1[it]), !data->external);
+
+	SendDlgItemMessage(hWnd, IDC_PC_INVERT, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[0] ? bitmapRed : bitmapGreen) : bitmapGray));
+	SendDlgItemMessage(hWnd, IDC_PC_ROWX, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[1] ? bitmapRed : bitmapGreen) : bitmapGray));
+	SendDlgItemMessage(hWnd, IDC_PC_ROWY, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[2] ? bitmapRed : bitmapGreen) : bitmapGray));
+	SendDlgItemMessage(hWnd, IDC_PC_ROWZ, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[3] ? bitmapRed : bitmapGreen) : bitmapGray));
+}
+
+int HavokMaxV1::SpawnImportDialog()
+{
+	instanceDialogType = DLGTYPE_import;
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_IMPORT), GetActiveWindow(), DialogCallbacksMain, reinterpret_cast<LPARAM>(this));
+}
+
+int HavokMaxV1::SpawnExportDialog()
+{
+	instanceDialogType = DLGTYPE_export;
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_EXPORT), GetActiveWindow(), DialogCallbacksMain, reinterpret_cast<LPARAM>(this));
+}
+
+void HavokMaxV1::CollisionHandler()
 {
 	if (
 		(IsDlgButtonChecked(hWnd, IDC_RB_XX) && (IsDlgButtonChecked(hWnd, IDC_RB_YX) || IsDlgButtonChecked(hWnd, IDC_RB_ZX))) ||
@@ -311,9 +599,9 @@ void HavokMax::CollisionHandler()
 	SendDlgItemMessage(hWnd, IDC_PC_INVERT, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(checkedStatus ? bitmapRed : bitmapGreen));
 }
 
-int HavokMax::SanityBitcher()
+int HavokMaxV1::SanityBitcher()
 {
-	const int insane = reinterpret_cast<decltype(sanityCheck)::ValueType&>(sanityCheck);
+	const int insane = reinterpret_cast<decltype(sanityCheck)::ValueType &>(sanityCheck);
 
 	if (!insane)
 		return insane;
@@ -346,34 +634,32 @@ int HavokMax::SanityBitcher()
 	return insane;
 }
 
-int HavokMax::SavePreset(const TCHAR* presetName)
+INT_PTR HavokMaxV1::DlgCommandCallBack(WPARAM wParam, LPARAM lParam)
 {
-	PresetData *data = nullptr;
-
-	for (auto &p : presets)
-		if (*p == presetName)
-		{
-			data = p;
-			break;
-		}
-
-	if (data)
+	switch (LOWORD(wParam))
 	{
-		MessageBox(hWnd, _T("Creation of duplicate presets is not allowed.\nPlease choose a diferent name."), _T("Cannot save preset"), MB_ICONSTOP);
-		return 1;
-	}
-
-	if (!data)
+	case IDC_RB_XX:
+	case IDC_RB_YX:
+	case IDC_RB_ZX:
+	case IDC_RB_XY:
+	case IDC_RB_YY:
+	case IDC_RB_ZY:
+	case IDC_RB_XZ:
+	case IDC_RB_YZ:
+	case IDC_RB_ZZ:
+	case IDC_CH_ROWX:
+	case IDC_CH_ROWY:
+	case IDC_CH_ROWZ:
 	{
-		data = new PresetData();
-		data->name = presetName;
-		presets.push_back(data);
+		CollisionHandler();
+		UpdateData();
+		return TRUE;
 	}
-
-	return SavePreset(data);
+	}
+	return (INT_PTR) FALSE;
 }
 
-int HavokMax::SavePreset(PresetData* data)
+int HavokMaxV1::SavePreset(PresetData *data)
 {
 	if (data->external)
 	{
@@ -410,268 +696,161 @@ int HavokMax::SavePreset(PresetData* data)
 	return 0;
 }
 
-static const int toEnableItems[] = {
-	IDC_RB_XX, IDC_RB_XY, IDC_RB_XZ, IDC_RB_YX, IDC_RB_YY, IDC_RB_YZ, IDC_RB_ZX, IDC_RB_ZY,
-	IDC_RB_ZZ, IDC_CH_ROWX, IDC_CH_ROWY, IDC_CH_ROWZ, IDC_SPIN, IDC_SPIN_SCALE };
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// HavokMaxV2
 
-void HavokMax::UpdatePresetUI(PresetData* data)
+int HavokMaxV2::SanityBitcher()
+{
+	const int insane = reinterpret_cast<decltype(sanityCheck)::ValueType &>(sanityCheck);
+
+	if (!insane)
+		return insane;
+
+	TSTRING reslt;
+
+	if (sanityCheck[1])
+		reslt.append(_T("Back and Right axes cannot have same values!\n"));
+
+	if (sanityCheck[0])
+		reslt.append(_T("All axes are inverted!\n"));
+
+	MessageBox(hWnd, reslt.c_str(), _T("Invalid coordsys settings!"), MB_ICONSTOP);
+
+	return insane;
+}
+
+void HavokMaxV2::CollisionHandler()
+{
+	const LRESULT backSel = SendMessage(comboBack, CB_GETCURSEL, 0, 0);
+	const LRESULT rightSel = SendMessage(comboRight, CB_GETCURSEL, 0, 0);
+
+	const bool checkedStatus = IsDlgButtonChecked(hWnd, IDC_CH_INVERT_BACK) && IsDlgButtonChecked(hWnd, IDC_CH_INVERT_RIGHT) && IsDlgButtonChecked(hWnd, IDC_CH_INVERT_TOP);
+	sanityCheck(0, checkedStatus);
+
+	ShowWindow(GetDlgItem(hWnd, IDC_PC_INVERT_ERROR), checkedStatus ? SW_SHOW : SW_HIDE);
+
+	const bool colliding = backSel == rightSel;
+	sanityCheck(1, colliding);
+
+	ShowWindow(GetDlgItem(hWnd, IDC_PC_REMAP_ERROR1), colliding ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, IDC_PC_REMAP_ERROR2), colliding ? SW_SHOW : SW_HIDE);
+}
+
+INT_PTR HavokMaxV2::DlgCommandCallBack(WPARAM wParam, LPARAM lParam)
+{
+	switch (LOWORD(wParam))
+	{
+	case IDC_CB_BACK:
+	case IDC_CB_RIGHT:
+	case IDC_CH_INVERT_TOP:
+	case IDC_CH_INVERT_RIGHT:
+	case IDC_CH_INVERT_BACK:
+	{
+		CollisionHandler();
+		UpdateData();
+		return TRUE;
+	}
+	}
+	return (INT_PTR)FALSE;
+}
+
+int HavokMaxV2::SpawnImportDialog()
+{
+	instanceDialogType = DLGTYPE_import;
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_IMPORT_NEW), GetActiveWindow(), DialogCallbacksMain, reinterpret_cast<LPARAM>(this));
+}
+
+int HavokMaxV2::SpawnExportDialog()
+{
+	instanceDialogType = DLGTYPE_export;
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_EXPORT_NEW), GetActiveWindow(), DialogCallbacksMain, reinterpret_cast<LPARAM>(this));
+}
+
+void HavokMaxV2::Setup(HWND hwnd)
+{
+	HavokMax::Setup(hwnd);
+	comboBack = GetDlgItem(hWnd, IDC_CB_BACK);
+	comboRight = GetDlgItem(hWnd, IDC_CB_RIGHT);
+
+	static const TCHAR *_items[] = { _T("Right"), _T("Back"), _T("Top") };
+
+	for (int c = 0; c < 3; c++)
+	{
+		SendMessage(comboBack, CB_ADDSTRING, 0, (LPARAM)_items[c]);
+		SendMessage(comboRight, CB_ADDSTRING, 0, (LPARAM)_items[c]);
+	}
+}
+
+static const int toEnableItemsV2[] = {
+	IDC_CB_BACK, IDC_CB_RIGHT, IDC_CH_INVERT_TOP, IDC_CH_INVERT_RIGHT, IDC_CH_INVERT_BACK, IDC_SPIN, IDC_SPIN_SCALE };
+
+void HavokMaxV2::UpdatePresetUI(PresetData *data)
 {
 	corMat = data->corMat;
 	IDC_EDIT_SCALE_value = data->scale;
 
 	SetupFloatSpinner(hWnd, IDC_SPIN_SCALE, IDC_EDIT_SCALE, 0, 5000, IDC_EDIT_SCALE_value);
 
-	if (data->corMat.GetRow(0)[0])
-		CheckRadioButton(hWnd, IDC_RB_XX, IDC_RB_XZ, IDC_RB_XX);
-	else if (data->corMat.GetRow(0)[1])
-		CheckRadioButton(hWnd, IDC_RB_XX, IDC_RB_XZ, IDC_RB_XY);
+	int curIndex = 0;
+
+	if (data->corMat.GetRow(0)[1])
+		curIndex = 1;
 	else if (data->corMat.GetRow(0)[2])
-		CheckRadioButton(hWnd, IDC_RB_XX, IDC_RB_XZ, IDC_RB_XZ);
+		curIndex = 2;
 
-	if (data->corMat.GetRow(1)[0])
-		CheckRadioButton(hWnd, IDC_RB_YZ, IDC_RB_YX, IDC_RB_YX);
-	else if (data->corMat.GetRow(1)[1])
-		CheckRadioButton(hWnd, IDC_RB_YZ, IDC_RB_YX, IDC_RB_YY);
+	SendMessage(comboRight, CB_SETCURSEL, curIndex, 0);
+	curIndex = 0;
+
+	if (data->corMat.GetRow(1)[1])
+		curIndex = 1;
 	else if (data->corMat.GetRow(1)[2])
-		CheckRadioButton(hWnd, IDC_RB_YZ, IDC_RB_YX, IDC_RB_YZ);
+		curIndex = 2;
 
-	if (data->corMat.GetRow(2)[0])
-		CheckRadioButton(hWnd, IDC_RB_ZX, IDC_RB_ZZ, IDC_RB_ZX);
-	else if (data->corMat.GetRow(2)[1])
-		CheckRadioButton(hWnd, IDC_RB_ZX, IDC_RB_ZZ, IDC_RB_ZY);
-	else if (data->corMat.GetRow(2)[2])
-		CheckRadioButton(hWnd, IDC_RB_ZX, IDC_RB_ZZ, IDC_RB_ZZ);
+	SendMessage(comboBack, CB_SETCURSEL, curIndex, 0);
 
-	CheckDlgButton(hWnd, IDC_CH_ROWX, (data->corMat.GetRow(0)[0] + data->corMat.GetRow(0)[1] + data->corMat.GetRow(0)[2]) < 0);
-	CheckDlgButton(hWnd, IDC_CH_ROWY, (data->corMat.GetRow(1)[0] + data->corMat.GetRow(1)[1] + data->corMat.GetRow(1)[2]) < 0);
-	CheckDlgButton(hWnd, IDC_CH_ROWZ, (data->corMat.GetRow(2)[0] + data->corMat.GetRow(2)[1] + data->corMat.GetRow(2)[2]) < 0);
+	CheckDlgButton(hWnd, IDC_CH_INVERT_RIGHT, (data->corMat.GetRow(0)[0] + data->corMat.GetRow(0)[1] + data->corMat.GetRow(0)[2]) < 0);
+	CheckDlgButton(hWnd, IDC_CH_INVERT_BACK, (data->corMat.GetRow(1)[0] + data->corMat.GetRow(1)[1] + data->corMat.GetRow(1)[2]) < 0);
+	CheckDlgButton(hWnd, IDC_CH_INVERT_TOP, (data->corMat.GetRow(2)[0] + data->corMat.GetRow(2)[1] + data->corMat.GetRow(2)[2]) < 0);
 
 	CollisionHandler();
 
-	const int bruh = sizeof(toEnableItems) / 4;
+	const int bruh = sizeof(toEnableItemsV2) / 4;
 
 	for (int it = 0; it < bruh; it++)
-		EnableWindow(GetDlgItem(hWnd, toEnableItems[it]), !data->external);
-
-	SendDlgItemMessage(hWnd, IDC_PC_INVERT, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[0] ? bitmapRed : bitmapGreen) : bitmapGray));
-	SendDlgItemMessage(hWnd, IDC_PC_ROWX, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[1] ? bitmapRed : bitmapGreen) : bitmapGray));
-	SendDlgItemMessage(hWnd, IDC_PC_ROWY, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[2] ? bitmapRed : bitmapGreen) : bitmapGray));
-	SendDlgItemMessage(hWnd, IDC_PC_ROWZ, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(!data->external ? (sanityCheck[3] ? bitmapRed : bitmapGreen) : bitmapGray));
+		EnableWindow(GetDlgItem(hWnd, toEnableItemsV2[it]), !data->external);
 }
 
-void HavokMax::UpdateData()
+int HavokMaxV2::SavePreset(PresetData *data)
 {
-	const LRESULT curSel = SendMessage(comboHandle, CB_GETCURSEL, 0, 0);
-
-	SavePreset(presets[curSel]);
-
-	corMat = presets[curSel]->corMat;
-}
-
-INT_PTR CALLBACK NewPresetDLG(HWND hWnd, UINT message, WPARAM wParam, LPARAM)
-{
-	switch (message)
+	if (data->external)
 	{
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDOK:
-		{
-			HWND comboHandle = GetDlgItem(hWnd, IDC_CB_NEWPRESET);
-			const int textLen = GetWindowTextLength(comboHandle) + 1;
-
-			if (textLen == 1)
-			{
-				EndDialog(hWnd, NULL);
-				return TRUE;
-			}
-
-			TCHAR *textData = static_cast<TCHAR*>(malloc(sizeof(TCHAR) * textLen));
-			GetWindowText(comboHandle, textData, textLen);
-			EndDialog(hWnd, reinterpret_cast<INT_PTR>(textData));
-			return TRUE;
-		}
-		case IDCANCEL:
-			EndDialog(hWnd, NULL);
-			return TRUE;
-		}
+		MessageBox(hWnd, _T("Cannot save into external preset!"), _T("Cannot save preset"), MB_ICONSTOP);
+		return 1;
 	}
-	return FALSE;
-}
 
-INT_PTR CALLBACK DialogCallbacks(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	HavokMax *imp = reinterpret_cast<HavokMax*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	data->scale = IDC_EDIT_SCALE_value;
 
-	switch (message)
-	{
-	case WM_INITDIALOG:
-	{
-		CenterWindow(hWnd, GetParent(hWnd));
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
-		imp = reinterpret_cast<HavokMax*>(lParam);
-		imp->hWnd = hWnd;
-		imp->comboHandle = GetDlgItem(hWnd, IDC_CB_PRESET);
-		imp->LoadCFG();
-		SetupFloatSpinner(hWnd, IDC_SPIN_SCALE, IDC_EDIT_SCALE, 0, 5000, imp->IDC_EDIT_SCALE_value);
+	float sign = IsDlgButtonChecked(hWnd, IDC_CH_INVERT_RIGHT) ? -1.0f : 1.0f;
+	Point3 value = {};
+	int XAxisSelection = static_cast<int>(SendMessage(comboRight, CB_GETCURSEL, 0, 0));
 
-		for (auto &p : presets)
-			SendMessage(imp->comboHandle, CB_ADDSTRING, 0, (LPARAM)p->name.c_str());
+	value[XAxisSelection] = sign;
+	data->corMat.SetRow(0, value);
+	value[XAxisSelection] = 0.0f;
 
-		LRESULT reslt = SendMessage(imp->comboHandle, CB_SELECTSTRING, 0, (LPARAM)imp->currentPresetName.c_str());
-		SendMessage(imp->comboHandle, CB_SETCURSEL, reslt > 0 ? reslt : 0, 0);
+	sign = IsDlgButtonChecked(hWnd, IDC_CH_INVERT_BACK) ? -1.0f : 1.0f;
 
-		imp->UpdatePresetUI(presets[reslt]);
+	int YAxisSelection = static_cast<int>(SendMessage(comboBack, CB_GETCURSEL, 0, 0));
 
-		if (imp->instanceDialogType == HavokMax::DLGTYPE_import)
-			SetWindowText(hWnd, _T("Havok Import v1"));
-		else if (imp->instanceDialogType == HavokMax::DLGTYPE_export)
-		{
-			SetWindowText(hWnd, _T("Havok Export v1"));
+	value[YAxisSelection] = sign;
+	data->corMat.SetRow(1, value);
+	value[YAxisSelection] = 0.0f;
 
-			HWND comboItem = GetDlgItem(hWnd, IDC_CB_TOOLSET);
+	sign = IsDlgButtonChecked(hWnd, IDC_CH_INVERT_TOP) ? -1.0f : 1.0f;
 
-			for (auto &t : toolsetNames)
-				SendMessage(comboItem, CB_ADDSTRING, 0, (LPARAM)t);
+	int ZAxisSelection = 3 - (YAxisSelection + XAxisSelection);
 
-			SendMessage(comboItem, CB_SETCURSEL, imp->IDC_CB_TOOLSET_index, 0);
+	value[ZAxisSelection] = sign;
+	data->corMat.SetRow(2, value);
 
-		}
-
-		return TRUE;
-	}
-	case WM_CLOSE:
-		imp->SaveCFG();
-		EndDialog(hWnd, 0);
-		return TRUE;
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDC_BT_DONE:
-			if (!imp->SanityBitcher())
-			{
-				imp->SaveCFG();
-				EndDialog(hWnd, 1);
-				return TRUE;
-			}
-		case IDC_BT_ABOUT:
-			ShowAboutDLG(hWnd);
-			return TRUE;
-		case IDC_BT_CANCEL:
-			EndDialog(hWnd, 0);
-			return TRUE;
-		case IDC_RB_XX:
-		case IDC_RB_YX:
-		case IDC_RB_ZX:
-		case IDC_RB_XY:
-		case IDC_RB_YY:
-		case IDC_RB_ZY:
-		case IDC_RB_XZ:
-		case IDC_RB_YZ:
-		case IDC_RB_ZZ:
-		case IDC_CH_ROWX:
-		case IDC_CH_ROWY:
-		case IDC_CH_ROWZ:
-		{
-			imp->CollisionHandler();
-			imp->UpdateData();
-			return TRUE;
-		}
-
-		case IDC_BT_SAVEPRESET:
-			imp->SaveCFG();
-			return TRUE;
-
-		case IDC_BT_ADDPRESET:
-		{
-			if (!imp->SanityBitcher())
-			{
-				TCHAR *textData = reinterpret_cast<TCHAR*>(DialogBox(hInstance, MAKEINTRESOURCE(IDD_NEWPRESET), hWnd, NewPresetDLG));
-
-				if (textData)
-				{
-					if (!imp->SavePreset(textData))
-					{
-						const LRESULT relt = SendMessage(imp->comboHandle, CB_ADDSTRING, 0, (LPARAM)textData);
-						SendMessage(imp->comboHandle, CB_SETCURSEL, relt, 0);
-						imp->UpdatePresetUI(presets[relt]);
-					}
-
-					free(textData);
-				}
-				imp->SaveCFG();
-			}
-			return TRUE;
-		}
-		case IDC_BT_DELETEPRESET:
-		{
-			const LRESULT curSel = SendMessage(imp->comboHandle, CB_GETCURSEL, 0, 0);
-
-			if (curSel > 0 && !presets[curSel]->external)
-			{
-				SendMessage(imp->comboHandle, CB_DELETESTRING, curSel, 0);
-				SendMessage(imp->comboHandle, CB_SETCURSEL, curSel - 1, 0);
-				imp->UpdatePresetUI(presets[curSel - 1]);
-
-				WritePrivateProfileString(presets[curSel]->name.c_str(), NULL, NULL, imp->CFGFile);
-				delete presets[curSel];
-				presets.erase(presets.begin() + curSel);
-			}
-			imp->SaveCFG();
-			return TRUE;
-		}
-
-		case IDC_CB_PRESET:
-		{
-			switch (HIWORD(wParam))
-			{
-			case CBN_SELCHANGE:
-			{
-				const LRESULT curSel = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
-				imp->UpdatePresetUI(presets[curSel]);
-				return TRUE;
-			}
-			break;
-			}
-		break;
-		}
-
-		case IDC_CB_TOOLSET:
-		{
-			switch (HIWORD(wParam))
-			{
-			case CBN_SELCHANGE:
-			{
-				const LRESULT curSel = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
-				imp->IDC_CB_TOOLSET_index = curSel;
-				return TRUE;
-			}
-			break;
-			}
-		break;
-		}
-		}
-
-		case CC_SPINNER_CHANGE:
-			switch (LOWORD(wParam))
-			{
-			case IDC_SPIN_SCALE:
-				imp->IDC_EDIT_SCALE_value = reinterpret_cast<ISpinnerControl *>(lParam)->GetFVal();
-				imp->UpdateData();
-				break;
-			}
-	}
-	return (INT_PTR)FALSE;
-}
-
-int HavokMax::SpawnImportDialog()
-{
-	instanceDialogType = DLGTYPE_import;
-	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_IMPORT), GetActiveWindow(), DialogCallbacks, reinterpret_cast<LPARAM>(this));
-}
-
-int HavokMax::SpawnExportDialog()
-{
-	instanceDialogType = DLGTYPE_export;
-	return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_EXPORT), GetActiveWindow(), DialogCallbacks, reinterpret_cast<LPARAM>(this));
+	return 0;
 }

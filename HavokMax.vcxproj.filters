@@ -51,5 +51,11 @@
     <Image Include="src\sanityBulbs.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="src\axis.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="src\error.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

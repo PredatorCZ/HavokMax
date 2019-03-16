@@ -56,21 +56,53 @@ public:
 	TSTRING cfgpath;
 	t_Flags<char> sanityCheck;
 	const TCHAR *CFGFile;
-	void CollisionHandler();
-	void LoadCFG();
-	void BuildCFG();
-	void SaveCFG();
-	int SavePreset(const TCHAR *presetName);
-	int SavePreset(PresetData *presetData);
-	void UpdatePresetUI(PresetData *presetData);
-	void UpdateData();
-	int SanityBitcher();
 	NewIDConfigValue(IDC_EDIT_SCALE);
 	NewIDConfigIndex(IDC_CB_TOOLSET);
 	Matrix3 corMat;
-	HavokMax();
+
+	void LoadCFG();
+	void BuildCFG();
+	void SaveCFG();
+	void UpdateData();
+	int SavePreset(const TCHAR *presetName);
+	virtual int SavePreset(PresetData *presetData) = 0;
+	virtual void Setup(HWND hwnd);
+	virtual void CollisionHandler() = 0;
+	virtual void UpdatePresetUI(PresetData *presetData) = 0;
+	virtual int SanityBitcher() = 0;
+	virtual int SpawnImportDialog() = 0;
+	virtual int SpawnExportDialog() = 0;
+	virtual INT_PTR DlgCommandCallBack(WPARAM wParam, LPARAM lParam) = 0;
+
+	HavokMax();	
+};
+
+class HavokMaxV1 : public HavokMax
+{
+public:
+	void CollisionHandler();
+	void UpdatePresetUI(PresetData *presetData);
+	int SanityBitcher();
 	int SpawnImportDialog();
 	int SpawnExportDialog();
+	INT_PTR DlgCommandCallBack(WPARAM wParam, LPARAM lParam);
+	int SavePreset(PresetData *presetData);
+};
+
+class HavokMaxV2 : public HavokMax
+{
+public:
+	HWND comboRight;
+	HWND comboBack;
+
+	void CollisionHandler();
+	void UpdatePresetUI(PresetData *presetData);
+	int SanityBitcher();
+	int SpawnImportDialog();
+	int SpawnExportDialog();
+	void Setup(HWND hwnd);
+	INT_PTR DlgCommandCallBack(WPARAM wParam, LPARAM lParam);
+	int SavePreset(PresetData *presetData);
 };
 
 void BuildHavokResources();
