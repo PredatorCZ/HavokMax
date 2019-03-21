@@ -75,6 +75,7 @@ public:
 	virtual INT_PTR DlgCommandCallBack(WPARAM wParam, LPARAM lParam) = 0;
 
 	HavokMax();	
+	virtual ~HavokMax() {}
 };
 
 class HavokMaxV1 : public HavokMax

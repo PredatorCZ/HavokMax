@@ -161,6 +161,9 @@ void HavokImport::LoadSkeleton(const hkaSkeleton &skel)
 
 int HavokImport::DoImport(const TCHAR* filename, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
 {
+	char *oldLocale = setlocale(LC_NUMERIC, NULL);
+	setlocale(LC_NUMERIC, "en-US");
+
 	if (!suppressPrompts)
 		if (!SpawnImportDialog())
 			return TRUE;
@@ -182,6 +185,8 @@ int HavokImport::DoImport(const TCHAR* filename, ImpInterface* /*importerInt*/, 
 		}
 	
 	delete pFile;
+
+	setlocale(LC_NUMERIC, oldLocale);
 
 	return TRUE;
 }

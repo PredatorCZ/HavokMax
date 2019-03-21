@@ -142,6 +142,8 @@ thread_local static class : public ITreeEnumProc
 		INode *parentNode = nde->GetParentNode();
 		Matrix3 nodeTM = nde->GetNodeTM(0);
 
+		nodeTM.NoScale();
+
 		if (parentNode && !parentNode->IsRootNode())
 		{
 			for (auto &b : skeleton->bones)
@@ -149,6 +151,7 @@ thread_local static class : public ITreeEnumProc
 				{
 					currentNode->parent = b;
 					Matrix3 parentTM = static_cast<INode *>(static_cast<xmlBoneMAX *>(b)->ref)->GetNodeTM(0);
+					parentTM.NoScale();
 					parentTM.Invert();
 					nodeTM *= parentTM;
 					break;
@@ -159,7 +162,7 @@ thread_local static class : public ITreeEnumProc
 			nodeTM *= ex->inverseCorMat;	
 
 		currentNode->transform.position = reinterpret_cast<const Vector &>(nodeTM.GetTrans() * ex->inverseScale);
-		currentNode->transform.rotation = reinterpret_cast<Vector4 &>(static_cast<Quat>(nodeTM));
+		currentNode->transform.rotation = reinterpret_cast<Vector4 &>(static_cast<Quat>(nodeTM).Invert());
 
 		skeleton->bones.push_back(currentNode);
 	}
@@ -168,12 +171,7 @@ public:
 	HavokExport *ex;
 	int callback(INode * node)
 	{
-		Object *refobj = node->EvalWorldState(0).obj;
-
-		if ((refobj->ClassID() == Class_ID(DUMMY_CLASS_ID, 0) || refobj->ClassID() == Class_ID(BONE_CLASS_ID, 0) || refobj->ClassID() == BONE_OBJ_CLASSID))
-		{
-			AddBone(node);
-		}
+		AddBone(node);
 
 		return TREE_CONTINUE;
 	}
@@ -181,6 +179,9 @@ public:
 
 int HavokExport::DoExport(const TCHAR *fileName, ExpInterface *ei, Interface * /*i*/, BOOL suppressPrompts, DWORD /*options*/)
 {
+	char *oldLocale = setlocale(LC_NUMERIC, NULL);
+	setlocale(LC_NUMERIC, "en-US");
+
 	if (!suppressPrompts)
 		if (!SpawnExportDialog())
 			return TRUE;
@@ -201,6 +202,8 @@ int HavokExport::DoExport(const TCHAR *fileName, ExpInterface *ei, Interface * /
 	ei->theScene->EnumTree(&iSceneScanner);
 
 	hkFile.ExportXML(fileName, static_cast<hkXMLToolsets>(IDC_CB_TOOLSET_index + 1));
+
+	setlocale(LC_NUMERIC, oldLocale);
 
 	return TRUE;
 }
