@@ -201,7 +201,8 @@ int HavokExport::DoExport(const TCHAR *fileName, ExpInterface *ei, Interface * /
 	iSceneScanner.ex = this;
 	ei->theScene->EnumTree(&iSceneScanner);
 
-	hkFile.ExportXML(fileName, static_cast<hkXMLToolsets>(IDC_CB_TOOLSET_index + 1));
+	std::wstring _filename = esString(fileName);
+	hkFile.ExportXML(_filename.c_str() , static_cast<hkXMLToolsets>(IDC_CB_TOOLSET_index + 1));
 
 	setlocale(LC_NUMERIC, oldLocale);
 

@@ -159,7 +159,7 @@ void HavokImport::LoadSkeleton(const hkaSkeleton &skel)
 	}
 }
 
-int HavokImport::DoImport(const TCHAR* filename, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
+int HavokImport::DoImport(const TCHAR*fileName, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
 {
 	char *oldLocale = setlocale(LC_NUMERIC, NULL);
 	setlocale(LC_NUMERIC, "en-US");
@@ -168,7 +168,8 @@ int HavokImport::DoImport(const TCHAR* filename, ImpInterface* /*importerInt*/, 
 		if (!SpawnImportDialog())
 			return TRUE;
 
-	IhkPackFile *pFile = IhkPackFile::Create(filename);
+	std::wstring _filename = esString(fileName);
+	IhkPackFile *pFile = IhkPackFile::Create(_filename.c_str());
 
 	if (!pFile)
 		return FALSE;

@@ -20,7 +20,12 @@
 #include "HavokMax.h"
 #include <gdiplus.h>
 #include "datas/MasterPrinter.hpp"
+
+#if VERSION_3DSMAX_B == VERSION_3DSMAX_E(2010)
+#include <maxscrpt/maxscrpt.h>
+#else
 #include <maxscript/maxscript.h>
+#endif
 
 extern ClassDesc2* GetHavokImportDesc();
 extern ClassDesc2 *GetHavokExportDesc();

@@ -62,8 +62,7 @@ static HBITMAP bitmapGreen,
 const TCHAR _name[] = _T("Havok Tool");
 const TCHAR _info[] = _T("\nCopyright (C) 2016-2019 Lukas Cone\nVersion 1");
 const TCHAR _license[] = _T("Havok Tool uses HavokLib, Copyright(C) 2016-2019 Lukas Cone.");
-#pragma message("ADD LINK")
-const TCHAR _homePage[] = _T("https://lukascone.wordpress.com/2019/02/22/apex-engine-plugin");
+const TCHAR _homePage[] = _T("https://lukascone.wordpress.com/2019/03/21/havok-3ds-max-plugin");
 
 #include "MAXex/win/AboutDlg.h"
 
