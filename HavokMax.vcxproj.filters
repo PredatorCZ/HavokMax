@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="3rd_party\HavokLib\3rd_party\PreCore\datas\esString.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\HavokMax.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

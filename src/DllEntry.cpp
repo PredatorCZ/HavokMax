@@ -88,6 +88,9 @@ __declspec( dllexport ) ULONG LibVersion()
 
 void PrintLog(TCHAR* msg)
 {
+	if (!IsWindowVisible(the_listener_window) || IsIconic(the_listener_window))
+		show_listener();
+
 	mprintf(msg);
 	mflush();
 }

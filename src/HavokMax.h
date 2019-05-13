@@ -54,7 +54,7 @@ public:
 	HWND comboHandle;
 	HWND hWnd;
 	TSTRING cfgpath;
-	t_Flags<char> sanityCheck;
+	esFlags<char> sanityCheck;
 	const TCHAR *CFGFile;
 	NewIDConfigValue(IDC_EDIT_SCALE);
 	NewIDConfigIndex(IDC_CB_TOOLSET);
