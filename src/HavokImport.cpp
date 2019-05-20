@@ -193,7 +193,7 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani)
 		frameTimes.push_back(TicksToSec(v));
 
 	int curBone = 0;
-	float frameRate = ani->ComputeFrameRate();
+	ani->ComputeFrameRate();
 
 	for (auto &a : ani->Annotations())
 	{
@@ -224,7 +224,7 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani)
 		for (auto &t : frameTimes)
 		{
 			hkQTransform trans;
-			ani->GetTransform(curBone, t, frameRate, trans);
+			ani->GetTransform(curBone, t, trans);
 
 			Matrix3 cMat;
 			Quat &rots = reinterpret_cast<Quat &>(trans.rotation);
