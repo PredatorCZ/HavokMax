@@ -19,6 +19,7 @@
 
 #include "HavokMax.h"
 #include "datas/esstring.h"
+#include "datas/masterprinter.hpp"
 
 #define HavokImport_CLASS_ID	Class_ID(0xad115395, 0x924c02c0)
 static const TCHAR _className[] = _T("HavokImport");
@@ -43,6 +44,7 @@ public:
 	virtual int				DoImport(const TCHAR *name,ImpInterface *i,Interface *gi, BOOL suppressPrompts=FALSE);	// Import file
 
 	void LoadSkeleton(const hkaSkeleton &skel);
+	void LoadAnimation(const hkaAnimation *ani);
 };
 
 class : public ClassDesc2 
@@ -108,7 +110,7 @@ const TCHAR *HavokImport::OtherMessage2()
 
 unsigned int HavokImport::Version()
 {				
-	return 100;
+	return HAVOKMAX_VERSIONINT;
 }
 
 void HavokImport::ShowAbout(HWND hWnd)
@@ -159,6 +161,105 @@ void HavokImport::LoadSkeleton(const hkaSkeleton &skel)
 	}
 }
 
+void HavokImport::LoadAnimation(const hkaAnimation *ani)
+{
+	if (!ani)
+	{
+		printerror("[Havok] Unregistered animation format.");
+		return;
+	}
+
+	if (!ani->IsDecoderSupported())
+	{
+		printerror("[Havok] Usupported animation type: ", << ani->GetAnimationTypeName());
+		return;
+	}
+
+	TimeValue numTicks = SecToTicks(ani->GetDuration());
+	TimeValue ticksPerFrame = GetTicksPerFrame();
+	TimeValue overlappingTicks = numTicks % ticksPerFrame;
+
+	if (overlappingTicks > (ticksPerFrame / 2))
+		numTicks += ticksPerFrame - overlappingTicks;
+	else
+		numTicks -= overlappingTicks;
+
+	Interval aniRange(0, numTicks);
+	GetCOREInterface()->SetAnimRange(aniRange);
+
+	std::vector<float> frameTimes;
+
+	for (TimeValue v = 0; v <= aniRange.End(); v += GetTicksPerFrame())
+		frameTimes.push_back(TicksToSec(v));
+
+	int curBone = 0;
+	float frameRate = ani->ComputeFrameRate();
+
+	for (auto &a : ani->Annotations())
+	{
+		TSTRING boneName = esStringConvert<TCHAR>(a.get()->GetName());
+		INode *node = GetCOREInterface()->GetINodeByName(boneName.c_str());
+
+		if (!node)
+		{
+			printwarning("[Havok] Couldn't find bone: ", << boneName);
+			curBone++;
+			continue;
+		}
+
+		Control *cnt = node->GetTMController();
+
+		if (cnt->GetPositionController()->ClassID() != Class_ID(LININTERP_POSITION_CLASS_ID, 0))
+			cnt->SetPositionController((Control *)CreateInstance(CTRL_POSITION_CLASS_ID, Class_ID(LININTERP_POSITION_CLASS_ID, 0)));
+
+		if (cnt->GetRotationController()->ClassID() != Class_ID(LININTERP_ROTATION_CLASS_ID, 0))
+			cnt->SetRotationController((Control *)CreateInstance(CTRL_ROTATION_CLASS_ID, Class_ID(LININTERP_ROTATION_CLASS_ID, 0)));
+
+		if (cnt->GetScaleController()->ClassID() != Class_ID(LININTERP_SCALE_CLASS_ID, 0))
+			cnt->SetScaleController((Control *)CreateInstance(CTRL_SCALE_CLASS_ID, Class_ID(LININTERP_SCALE_CLASS_ID, 0)));
+
+		SuspendAnimate();
+		AnimateOn();
+
+		for (auto &t : frameTimes)
+		{
+			hkQTransform trans;
+			ani->GetTransform(curBone, t, frameRate, trans);
+
+			Matrix3 cMat;
+			Quat &rots = reinterpret_cast<Quat &>(trans.rotation);
+			cMat.SetRotate(rots.Conjugate());
+			cMat.SetTrans(reinterpret_cast<Point3 &>(trans.position) * IDC_EDIT_SCALE_value);
+			cMat.Scale(reinterpret_cast<Point3 &>(trans.scale));
+
+			if (node->GetParentNode()->IsRootNode())
+				cMat *= corMat;
+			else
+			{
+				Matrix3 pAbsMat = node->GetParentTM(SecToTicks(t));
+				Point3 nScale = { pAbsMat.GetRow(0).Length(), pAbsMat.GetRow(1).Length(), pAbsMat.GetRow(2).Length() };
+				Point3 fracPos = cMat.GetTrans() / nScale;
+				nScale = 1.f - nScale;
+				cMat.Translate(fracPos * nScale);
+			}
+
+			SetXFormPacket packet(cMat);
+
+			cnt->SetValue(SecToTicks(t), &packet);	
+		}
+
+		AnimateOff();
+
+		Control *rotControl = (Control *)CreateInstance(CTRL_ROTATION_CLASS_ID, Class_ID(HYBRIDINTERP_ROTATION_CLASS_ID, 0));
+		rotControl->Copy(cnt->GetRotationController());
+		cnt->GetRotationController()->Copy(rotControl);
+		
+		curBone++;
+	}
+}
+
+
+
 int HavokImport::DoImport(const TCHAR*fileName, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
 {
 	char *oldLocale = setlocale(LC_NUMERIC, NULL);
@@ -183,6 +284,9 @@ int HavokImport::DoImport(const TCHAR*fileName, ImpInterface* /*importerInt*/, I
 
 			for (auto &s : _cont->Skeletons())
 				LoadSkeleton(s);
+
+			if (_cont->GetNumAnimations())
+				LoadAnimation(_cont->GetAnimation(0));
 		}
 	
 	delete pFile;

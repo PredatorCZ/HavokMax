@@ -50,12 +50,22 @@
 #define IDC_PC_REMAP_ERROR1             1035
 #define IDC_PC_REMAP_ERROR2             1036
 #define IDC_CB_TOOLSET                  1037
+#define IDC_CH_ANIMATION                1038
+#define IDC_CH_ANISKELETON              1039
+#define IDC_CHECK3                      1040
+#define IDC_CH_ANIOPTIMIZE              1040
 #define IDC_CH_INVERT_RIGHT2            1041
 #define IDC_COLOR                       1456
 #define IDC_EDIT                        1490
 #define IDC_EDIT_SCALE                  1490
+#define IDC_EDIT_CAPTUREFRAME           1491
+#define IDC_EDIT_ANISTART               1492
+#define IDC_EDIT_ANIEND                 1493
 #define IDC_SPIN                        1496
 #define IDC_SPIN_SCALE                  1496
+#define IDC_SPIN_CAPTUREFRAME           1497
+#define IDC_SPIN_ANISTART               1498
+#define IDC_SPIN_ANIEND                 1499
 
 // Next default values for new objects
 // 
@@ -63,7 +73,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        112
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1038
+#define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

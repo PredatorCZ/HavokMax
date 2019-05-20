@@ -33,6 +33,9 @@
 #include <vector>
 #include "HavokXMLApi.hpp"
 
+#define HAVOKMAX_VERSION 1.2
+#define HAVOKMAX_VERSIONINT 120
+
 extern TCHAR *GetString(int id);
 extern HINSTANCE hInstance;
 
@@ -49,6 +52,19 @@ public:
 		DLGTYPE_export
 	};
 
+	enum ConfigBoolean
+	{
+		IDConfigBool(IDC_CH_ANIMATION),
+		IDConfigBool(IDC_CH_ANISKELETON),
+		IDConfigBool(IDC_CH_ANIOPTIMIZE),
+		IDConfigVisible(IDC_CH_ANISKELETON),
+		IDConfigVisible(IDC_CH_ANIOPTIMIZE),
+		IDConfigVisible(IDC_EDIT_ANIEND),
+		IDConfigVisible(IDC_EDIT_ANISTART),
+		IDConfigVisible(IDC_SPIN_ANIEND),
+		IDConfigVisible(IDC_SPIN_ANISTART),
+	};
+
 	DLGTYPE_e instanceDialogType;
 	TSTRING currentPresetName;
 	HWND comboHandle;
@@ -58,12 +74,19 @@ public:
 	const TCHAR *CFGFile;
 	NewIDConfigValue(IDC_EDIT_SCALE);
 	NewIDConfigIndex(IDC_CB_TOOLSET);
+	NewIDConfigIndex(IDC_EDIT_ANIEND);
+	NewIDConfigIndex(IDC_EDIT_ANISTART);
+	NewIDConfigIndex(IDC_EDIT_CAPTUREFRAME);
+
+	esFlags<ushort, ConfigBoolean> flags;
 	Matrix3 corMat;
 
 	void LoadCFG();
 	void BuildCFG();
 	void SaveCFG();
 	void UpdateData();
+	void SetupExportUI();
+
 	int SavePreset(const TCHAR *presetName);
 	virtual int SavePreset(PresetData *presetData) = 0;
 	virtual void Setup(HWND hwnd);

@@ -59,8 +59,11 @@ static HBITMAP bitmapGreen,
 	bitmapRed,
 	bitmapGray;
 
+#define QUOTE(x) #x
+#define CATTEDTEXT(...) StaticFor(QUOTE, __VA_ARGS__)
+
 const TCHAR _name[] = _T("Havok Tool");
-const TCHAR _info[] = _T("\nCopyright (C) 2016-2019 Lukas Cone\nVersion 1");
+const TCHAR _info[] = _T(CATTEDTEXT(\nCopyright(C) 2016-2019 Lukas Cone\nVersion, HAVOKMAX_VERSION));
 const TCHAR _license[] = _T("Havok Tool uses HavokLib, Copyright(C) 2016-2019 Lukas Cone.");
 const TCHAR _homePage[] = _T("https://lukascone.wordpress.com/2019/03/21/havok-3ds-max-plugin");
 
@@ -177,7 +180,15 @@ void DestroyHavokResources()
 
 HavokMax::HavokMax() :
 	CFGFile(nullptr), hWnd(nullptr), comboHandle(nullptr), currentPresetName(_T("Default")),
-	IDConfigValue(IDC_EDIT_SCALE)(1.0f), instanceDialogType(DLGTYPE_unknown), IDConfigIndex(IDC_CB_TOOLSET)(0) { corMat.IdentityMatrix(); }
+	IDConfigValue(IDC_EDIT_SCALE)(1.0f), instanceDialogType(DLGTYPE_unknown), IDConfigIndex(IDC_CB_TOOLSET)(0), IDConfigIndex(IDC_EDIT_CAPTUREFRAME)(0)
+{ 
+	corMat.IdentityMatrix();
+	
+	Interval aniRange = GetCOREInterface()->GetAnimRange();
+
+	IDConfigIndex(IDC_EDIT_ANISTART) = aniRange.Start() / GetTicksPerFrame();
+	IDConfigIndex(IDC_EDIT_ANIEND) = aniRange.End() / GetTicksPerFrame();
+}
 
 void HavokMax::BuildCFG()
 {
@@ -229,6 +240,18 @@ void HavokMax::LoadCFG()
 	GetCorrectionMatrix(defaultPreset.corMat, CFGFile, buffer, defaultPreset.name.c_str());
 
 	GetCFGIndex(IDC_CB_TOOLSET);
+	GetCFGIndex(IDC_EDIT_ANIEND);
+	GetCFGIndex(IDC_EDIT_ANISTART);
+	GetCFGIndex(IDC_EDIT_CAPTUREFRAME);
+	GetCFGChecked(IDC_CH_ANIMATION);
+	GetCFGChecked(IDC_CH_ANISKELETON);
+	GetCFGChecked(IDC_CH_ANIOPTIMIZE);
+	GetCFGEnabled(IDC_CH_ANISKELETON);
+	GetCFGEnabled(IDC_CH_ANIOPTIMIZE);
+	GetCFGEnabled(IDC_EDIT_ANIEND);
+	GetCFGEnabled(IDC_EDIT_ANISTART);
+	GetCFGEnabled(IDC_SPIN_ANIEND);
+	GetCFGEnabled(IDC_SPIN_ANISTART);
 }
 
 void HavokMax::SaveCFG()
@@ -259,6 +282,18 @@ void HavokMax::SaveCFG()
 	WriteIndex(hkPresetHeader, numUserPresets, CFGFile, buffer, _T("numUserPresets"));
 
 	SetCFGIndex(IDC_CB_TOOLSET);
+	SetCFGIndex(IDC_EDIT_ANIEND);
+	SetCFGIndex(IDC_EDIT_ANISTART);
+	SetCFGIndex(IDC_EDIT_CAPTUREFRAME);
+	SetCFGChecked(IDC_CH_ANIMATION);
+	SetCFGChecked(IDC_CH_ANISKELETON);
+	SetCFGChecked(IDC_CH_ANIOPTIMIZE);
+	SetCFGEnabled(IDC_CH_ANISKELETON);
+	SetCFGEnabled(IDC_CH_ANIOPTIMIZE);
+	SetCFGEnabled(IDC_EDIT_ANIEND);
+	SetCFGEnabled(IDC_EDIT_ANISTART);
+	SetCFGEnabled(IDC_SPIN_ANIEND);
+	SetCFGEnabled(IDC_SPIN_ANISTART);
 }
 
 int HavokMax::SavePreset(const TCHAR* presetName)
@@ -295,6 +330,22 @@ void HavokMax::UpdateData()
 	SavePreset(presets[curSel]);
 
 	corMat = presets[curSel]->corMat;
+}
+
+void HavokMax::SetupExportUI()
+{
+	SetWindowText(hWnd, _T(CATTEDTEXT(Havok Export v, HAVOKMAX_VERSION)));
+
+	HWND comboItem = GetDlgItem(hWnd, IDC_CB_TOOLSET);
+
+	for (auto &t : toolsetNames)
+		SendMessage(comboItem, CB_ADDSTRING, 0, (LPARAM)t);
+
+	SendMessage(comboItem, CB_SETCURSEL, IDC_CB_TOOLSET_index, 0);
+
+	SetupIntSpinner(hWnd, IDC_SPIN_ANIEND, IDC_EDIT_ANIEND, -10000, 10000, IDC_EDIT_ANIEND_index);
+	SetupIntSpinner(hWnd, IDC_SPIN_ANISTART, IDC_EDIT_ANISTART, -10000, 10000, IDC_EDIT_ANISTART_index);
+	SetupIntSpinner(hWnd, IDC_SPIN_CAPTUREFRAME, IDC_EDIT_CAPTUREFRAME, -10000, 10000, IDC_EDIT_CAPTUREFRAME_index);
 }
 
 void HavokMax::Setup(HWND hwnd)
@@ -359,18 +410,9 @@ INT_PTR CALLBACK DialogCallbacksMain(HWND hWnd, UINT message, WPARAM wParam, LPA
 		imp->UpdatePresetUI(presets[reslt]);
 
 		if (imp->instanceDialogType == HavokMax::DLGTYPE_import)
-			SetWindowText(hWnd, _T("Havok Import v1"));
+			SetWindowText(hWnd, _T(CATTEDTEXT(Havok Import v, HAVOKMAX_VERSION)));
 		else if (imp->instanceDialogType == HavokMax::DLGTYPE_export)
-		{
-			SetWindowText(hWnd, _T("Havok Export v1"));
-
-			HWND comboItem = GetDlgItem(hWnd, IDC_CB_TOOLSET);
-
-			for (auto &t : toolsetNames)
-				SendMessage(comboItem, CB_ADDSTRING, 0, (LPARAM)t);
-
-			SendMessage(comboItem, CB_SETCURSEL, imp->IDC_CB_TOOLSET_index, 0);
-		}
+			imp->SetupExportUI();
 
 		return TRUE;
 	}
@@ -467,6 +509,22 @@ INT_PTR CALLBACK DialogCallbacksMain(HWND hWnd, UINT message, WPARAM wParam, LPA
 			}
 			break;
 		}
+
+		MSGCheckbox(IDC_CH_ANIMATION); 
+		MSGEnable(IDC_CH_ANIMATION, IDC_CH_ANISKELETON);
+		MSGEnable(IDC_CH_ANIMATION, IDC_EDIT_ANIEND);
+		MSGEnable(IDC_CH_ANIMATION, IDC_EDIT_ANISTART);
+		MSGEnable(IDC_CH_ANIMATION, IDC_SPIN_ANIEND);
+		MSGEnable(IDC_CH_ANIMATION, IDC_SPIN_ANISTART);
+		MSGEnableEnabled(IDC_CH_ANISKELETON, IDC_CH_ANIOPTIMIZE);
+		break;
+
+		MSGCheckbox(IDC_CH_ANIOPTIMIZE); break;
+
+		MSGCheckbox(IDC_CH_ANISKELETON); 
+		MSGEnableEnabled(IDC_CH_ANISKELETON, IDC_CH_ANIOPTIMIZE);
+		break;
+
 		default:
 			return imp->DlgCommandCallBack(wParam, lParam);
 		}
@@ -477,6 +535,15 @@ INT_PTR CALLBACK DialogCallbacksMain(HWND hWnd, UINT message, WPARAM wParam, LPA
 		case IDC_SPIN_SCALE:
 			imp->IDC_EDIT_SCALE_value = reinterpret_cast<ISpinnerControl *>(lParam)->GetFVal();
 			imp->UpdateData();
+			break;
+		case IDC_SPIN_CAPTUREFRAME:
+			imp->IDC_EDIT_CAPTUREFRAME_index = reinterpret_cast<ISpinnerControl *>(lParam)->GetIVal();
+			break;
+		case IDC_SPIN_ANISTART:
+			imp->IDC_EDIT_ANISTART_index = reinterpret_cast<ISpinnerControl *>(lParam)->GetIVal();
+			break;
+		case IDC_SPIN_ANIEND:
+			imp->IDC_EDIT_ANIEND_index= reinterpret_cast<ISpinnerControl *>(lParam)->GetIVal();
 			break;
 		}
 	}
