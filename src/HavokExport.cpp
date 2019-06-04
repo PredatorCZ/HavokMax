@@ -68,10 +68,7 @@ public:
 ClassDesc2* GetHavokExportDesc() { return &HavokExportDesc; }
 
 //--- HavokImp -------------------------------------------------------
-HavokExport::HavokExport()
-{
-	Rescan();
-}
+HavokExport::HavokExport() {}
 
 int HavokExport::ExtCount()
 {

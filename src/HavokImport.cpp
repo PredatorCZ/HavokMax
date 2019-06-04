@@ -44,7 +44,7 @@ public:
 	virtual int				DoImport(const TCHAR *name,ImpInterface *i,Interface *gi, BOOL suppressPrompts=FALSE);	// Import file
 
 	void LoadSkeleton(const hkaSkeleton &skel);
-	void LoadAnimation(const hkaAnimation *ani);
+	void LoadAnimation(const hkaAnimation *ani, const hkaAnimationBinding *bind);
 };
 
 class : public ClassDesc2 
@@ -63,10 +63,7 @@ public:
 ClassDesc2* GetHavokImportDesc() { return &HavokImportDesc; }
 
 //--- HavokImp -------------------------------------------------------
-HavokImport::HavokImport()
-{
-	Rescan();
-}
+HavokImport::HavokImport() {}
 
 int HavokImport::ExtCount()
 {
@@ -161,7 +158,66 @@ void HavokImport::LoadSkeleton(const hkaSkeleton &skel)
 	}
 }
 
-void HavokImport::LoadAnimation(const hkaAnimation *ani)
+static class : public ITreeEnumProc
+{
+	const MSTR skelNameHint = _T("hkaSkeleton");
+	const MSTR boneNameHint = _T("hkaBone");
+	const MSTR skelNameExclude = _T("ragdoll");
+public:
+	std::vector<INode *> bones;
+
+	void RescanBones()
+	{
+		bones.clear();
+		GetCOREInterface7()->GetScene()->EnumTree(this);
+	}
+
+	INode *LookupNode(int ID)
+	{
+		for (auto &b : bones)
+			if (b->UserPropExists(boneNameHint))
+			{
+				int _ID;
+				b->GetUserPropInt(boneNameHint, _ID);
+
+				if (_ID == ID)
+					return b;
+			}
+
+		return nullptr;
+	}
+
+	int callback(INode *node)
+	{
+		Object *refobj = node->EvalWorldState(0).obj;
+
+		if (node->UserPropExists(skelNameHint))
+		{
+			MSTR skelName;
+			node->GetUserPropString(skelNameHint, skelName);
+			skelName.toLower();
+
+			const int skelNameExcludeSize = skelNameExclude.Length();
+			bool found = true;
+
+			for (int s = 0; s < skelNameExcludeSize; s++)
+				if (skelName[s] != skelNameExclude[s])
+				{
+					found = false;
+					break;
+				}
+
+			if (found)
+				return TREE_CONTINUE;
+
+			bones.push_back(node);
+		}
+
+		return TREE_CONTINUE;
+	}
+}iBoneScanner;
+
+void HavokImport::LoadAnimation(const hkaAnimation *ani, const hkaAnimationBinding *bind)
 {
 	if (!ani)
 	{
@@ -174,6 +230,8 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani)
 		printerror("[Havok] Usupported animation type: ", << ani->GetAnimationTypeName());
 		return;
 	}
+
+	iBoneScanner.RescanBones();
 
 	TimeValue numTicks = SecToTicks(ani->GetDuration());
 	TimeValue ticksPerFrame = GetTicksPerFrame();
@@ -192,18 +250,72 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani)
 	for (TimeValue v = 0; v <= aniRange.End(); v += GetTicksPerFrame())
 		frameTimes.push_back(TicksToSec(v));
 
-	int curBone = 0;
 	ani->ComputeFrameRate();
 
-	for (auto &a : ani->Annotations())
+	const int numBones = ani->GetNumOfTransformTracks();
+	const bool additiveAnimation = bind ? bind->GetBlendHint() != BlendHint::NORMAL : false;
+
+	std::vector<Matrix3> addTMs(numBones, { {1.0f, 0.0f, 0.0f} ,{0.0f, 1.0f, 0.0f} ,{0.0f, 0.0f, 1.0f} ,{0.0f, 0.0f, 0.0f} });
+
+	if (additiveAnimation)
+		for (int curBone = 0; curBone < numBones; curBone++)
+		{
+			INode *node = nullptr;
+			TSTRING boneName;
+
+			if (ani->GetNumAnnotations())
+			{
+				hkaAnnotationTrackPtr annot = ani->GetAnnotation(curBone);
+				boneName = esStringConvert<TCHAR>(annot.get()->GetName());
+				node = GetCOREInterface()->GetINodeByName(boneName.c_str());
+			}
+
+			if (!node && bind)
+				node = iBoneScanner.LookupNode(bind->GetTransformTrackToBoneIndex(curBone));
+
+			if (!node)
+				continue;
+
+			Matrix3 inPacket = node->GetNodeTM(0);
+
+			if (!node->GetParentNode()->IsRootNode())
+			{
+				Matrix3 parentTM = node->GetParentTM(0);
+				parentTM.Invert();
+				inPacket *= parentTM;
+			}
+
+			addTMs[curBone] = inPacket;
+		}
+
+	for (int curBone = 0; curBone < numBones; curBone++)
 	{
-		TSTRING boneName = esStringConvert<TCHAR>(a.get()->GetName());
-		INode *node = GetCOREInterface()->GetINodeByName(boneName.c_str());
+		INode *node = nullptr;
+		TSTRING boneName;
+
+		if (ani->GetNumAnnotations())
+		{
+			hkaAnnotationTrackPtr annot = ani->GetAnnotation(curBone);
+			boneName = esStringConvert<TCHAR>(annot.get()->GetName());
+			node = GetCOREInterface()->GetINodeByName(boneName.c_str());
+		}
+
+		if (!node && bind)
+		{
+			node = iBoneScanner.LookupNode(bind->GetTransformTrackToBoneIndex(curBone));
+		}
 
 		if (!node)
 		{
-			printwarning("[Havok] Couldn't find bone: ", << boneName);
-			curBone++;
+			if (boneName.length())
+			{
+				printwarning("[Havok] Couldn't find bone: ", << boneName);
+			}
+			else
+			{
+				printwarning("[Havok] Couldn't find hkaBone: ", << curBone);
+			}
+
 			continue;
 		}
 
@@ -243,6 +355,9 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani)
 				cMat.Translate(fracPos * nScale);
 			}
 
+			if (additiveAnimation)
+				cMat *= addTMs[curBone];
+
 			SetXFormPacket packet(cMat);
 
 			cnt->SetValue(SecToTicks(t), &packet);	
@@ -254,20 +369,13 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani)
 		rotControl->Copy(cnt->GetRotationController());
 		cnt->GetRotationController()->Copy(rotControl);
 		
-		curBone++;
 	}
 }
-
-
 
 int HavokImport::DoImport(const TCHAR*fileName, ImpInterface* /*importerInt*/, Interface* /*ip*/, BOOL suppressPrompts)
 {
 	char *oldLocale = setlocale(LC_NUMERIC, NULL);
 	setlocale(LC_NUMERIC, "en-US");
-
-	if (!suppressPrompts)
-		if (!SpawnImportDialog())
-			return TRUE;
 
 	std::wstring _filename = esString(fileName);
 	IhkPackFile *pFile = IhkPackFile::Create(_filename.c_str());
@@ -282,11 +390,17 @@ int HavokImport::DoImport(const TCHAR*fileName, ImpInterface* /*importerInt*/, I
 		{
 			const hkaAnimationContainer *_cont = v;
 
+			numAnimations = _cont->GetNumAnimations();
+
+			if (!suppressPrompts)
+				if (!SpawnImportDialog())
+					return TRUE;
+
 			for (auto &s : _cont->Skeletons())
 				LoadSkeleton(s);
 
-			if (_cont->GetNumAnimations())
-				LoadAnimation(_cont->GetAnimation(0));
+			if (numAnimations)
+				LoadAnimation(_cont->GetAnimation(IDC_EDIT_MOTIONID_index), _cont->GetBinding(IDC_EDIT_MOTIONID_index));
 		}
 	
 	delete pFile;

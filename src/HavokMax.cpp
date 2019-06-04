@@ -63,7 +63,7 @@ static HBITMAP bitmapGreen,
 #define CATTEDTEXT(...) StaticFor(QUOTE, __VA_ARGS__)
 
 const TCHAR _name[] = _T("Havok Tool");
-const TCHAR _info[] = _T(CATTEDTEXT(\nCopyright(C) 2016-2019 Lukas Cone\nVersion, HAVOKMAX_VERSION));
+const TCHAR _info[] = _T(CATTEDTEXT(\nCopyright(C) 2016-2019 Lukas Cone\nVersion\x20, HAVOKMAX_VERSION));
 const TCHAR _license[] = _T("Havok Tool uses HavokLib, Copyright(C) 2016-2019 Lukas Cone.");
 const TCHAR _homePage[] = _T("https://lukascone.wordpress.com/2019/03/21/havok-3ds-max-plugin");
 
@@ -188,6 +188,16 @@ HavokMax::HavokMax() :
 
 	IDConfigIndex(IDC_EDIT_ANISTART) = aniRange.Start() / GetTicksPerFrame();
 	IDConfigIndex(IDC_EDIT_ANIEND) = aniRange.End() / GetTicksPerFrame();
+
+	Rescan();
+	LoadCFG();
+
+	for (auto &p : presets)
+		if (!p->name.compare(currentPresetName))
+		{
+			corMat = p->corMat;
+			IDC_EDIT_SCALE_value = p->scale;
+		}
 }
 
 void HavokMax::BuildCFG()
@@ -545,6 +555,9 @@ INT_PTR CALLBACK DialogCallbacksMain(HWND hWnd, UINT message, WPARAM wParam, LPA
 		case IDC_SPIN_ANIEND:
 			imp->IDC_EDIT_ANIEND_index= reinterpret_cast<ISpinnerControl *>(lParam)->GetIVal();
 			break;
+		case IDC_SPIN_MOTIONID:
+			imp->IDC_EDIT_MOTIONID_index = reinterpret_cast<ISpinnerControl *>(lParam)->GetIVal();
+			break;
 		}
 	}
 	return (INT_PTR)FALSE;
@@ -855,6 +868,7 @@ void HavokMaxV2::UpdatePresetUI(PresetData *data)
 	IDC_EDIT_SCALE_value = data->scale;
 
 	SetupFloatSpinner(hWnd, IDC_SPIN_SCALE, IDC_EDIT_SCALE, 0, 5000, IDC_EDIT_SCALE_value);
+	SetupIntSpinner(hWnd, IDC_SPIN_MOTIONID, IDC_EDIT_MOTIONID, 0, numAnimations - 1, IDC_EDIT_MOTIONID_index);
 
 	int curIndex = 0;
 

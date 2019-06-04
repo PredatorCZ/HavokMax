@@ -33,8 +33,8 @@
 #include <vector>
 #include "HavokXMLApi.hpp"
 
-#define HAVOKMAX_VERSION 1.4
-#define HAVOKMAX_VERSIONINT 140
+#define HAVOKMAX_VERSION 1.5
+#define HAVOKMAX_VERSIONINT 150
 
 extern TCHAR *GetString(int id);
 extern HINSTANCE hInstance;
@@ -72,6 +72,8 @@ public:
 	TSTRING cfgpath;
 	esFlags<char> sanityCheck;
 	const TCHAR *CFGFile;
+	int numAnimations;
+	NewIDConfigIndex(IDC_EDIT_MOTIONID);
 	NewIDConfigValue(IDC_EDIT_SCALE);
 	NewIDConfigIndex(IDC_CB_TOOLSET);
 	NewIDConfigIndex(IDC_EDIT_ANIEND);

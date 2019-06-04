@@ -52,18 +52,19 @@
 #define IDC_CB_TOOLSET                  1037
 #define IDC_CH_ANIMATION                1038
 #define IDC_CH_ANISKELETON              1039
-#define IDC_CHECK3                      1040
 #define IDC_CH_ANIOPTIMIZE              1040
 #define IDC_CH_INVERT_RIGHT2            1041
 #define IDC_COLOR                       1456
 #define IDC_EDIT                        1490
 #define IDC_EDIT_SCALE                  1490
 #define IDC_EDIT_CAPTUREFRAME           1491
+#define IDC_EDIT_MOTIONID               1501
 #define IDC_EDIT_ANISTART               1492
 #define IDC_EDIT_ANIEND                 1493
 #define IDC_SPIN                        1496
 #define IDC_SPIN_SCALE                  1496
 #define IDC_SPIN_CAPTUREFRAME           1497
+#define IDC_SPIN_MOTIONID               1500
 #define IDC_SPIN_ANISTART               1498
 #define IDC_SPIN_ANIEND                 1499
 
