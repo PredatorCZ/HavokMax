@@ -300,9 +300,12 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani, const hkaAnimationBindi
 			node = GetCOREInterface()->GetINodeByName(boneName.c_str());
 		}
 
-		if (!node && bind)
+		if (!node)
 		{
-			node = iBoneScanner.LookupNode(bind->GetTransformTrackToBoneIndex(curBone));
+			if (bind && bind->GetNumTransformTrackToBoneIndices())
+				node = iBoneScanner.LookupNode(bind->GetTransformTrackToBoneIndex(curBone));
+			else
+				node = iBoneScanner.LookupNode(curBone);
 		}
 
 		if (!node)
@@ -310,6 +313,10 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani, const hkaAnimationBindi
 			if (boneName.length())
 			{
 				printwarning("[Havok] Couldn't find bone: ", << boneName);
+			}
+			else if (bind && bind->GetNumTransformTrackToBoneIndices())
+			{
+				printwarning("[Havok] Couldn't find hkaBone: ", << bind->GetTransformTrackToBoneIndex(curBone));
 			}
 			else
 			{
