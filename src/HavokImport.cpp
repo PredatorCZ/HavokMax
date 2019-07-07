@@ -357,6 +357,11 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani, const hkaAnimationBindi
 			{
 				Matrix3 pAbsMat = node->GetParentTM(SecToTicks(t));
 				Point3 nScale = { pAbsMat.GetRow(0).Length(), pAbsMat.GetRow(1).Length(), pAbsMat.GetRow(2).Length() };
+
+				for (int s = 0; s < 3; s++)
+					if (!nScale[s])
+						nScale[s] = FLT_EPSILON;
+
 				Point3 fracPos = cMat.GetTrans() / nScale;
 				nScale = 1.f - nScale;
 				cMat.Translate(fracPos * nScale);
@@ -384,8 +389,7 @@ int HavokImport::DoImport(const TCHAR*fileName, ImpInterface* /*importerInt*/, I
 	char *oldLocale = setlocale(LC_NUMERIC, NULL);
 	setlocale(LC_NUMERIC, "en-US");
 
-	std::wstring _filename = esString(fileName);
-	IhkPackFile *pFile = IhkPackFile::Create(_filename.c_str());
+	IhkPackFile *pFile = IhkPackFile::Create(fileName, true);
 
 	if (!pFile)
 		return FALSE;

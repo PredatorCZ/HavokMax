@@ -422,8 +422,7 @@ int HavokExport::DoExport(const TCHAR *fileName, ExpInterface *ei, Interface * /
 		ProcessAnimation(skel, binding, anim);
 	}
 
-	std::wstring _filename = esString(fileName);
-	hkFile.ExportXML(_filename.c_str() , static_cast<hkXMLToolsets>(IDC_CB_TOOLSET_index + 1));
+	hkFile.ExportXML(fileName, static_cast<hkXMLToolsets>(IDC_CB_TOOLSET_index + 1));
 
 	if (!useSkeleton)
 		delete skel;
