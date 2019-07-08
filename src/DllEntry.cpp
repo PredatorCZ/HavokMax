@@ -58,7 +58,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,ULONG fdwReason,LPVOID /*lpvReserved*/)
 // could purchase the DLL if they don't have it.
 __declspec( dllexport ) const TCHAR* LibDescription()
 {
-	return NULL;
+	return _T("");
 }
 
 // This function returns the number of plug-in classes this DLL
