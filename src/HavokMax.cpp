@@ -538,7 +538,7 @@ INT_PTR CALLBACK DialogCallbacksMain(HWND hWnd, UINT message, WPARAM wParam, LPA
 		break;
 
 		default:
-			return imp->DlgCommandCallBack(wParam, lParam);
+			return imp ? imp->DlgCommandCallBack(wParam, lParam) : FALSE;
 		}
 
 	case CC_SPINNER_CHANGE:
