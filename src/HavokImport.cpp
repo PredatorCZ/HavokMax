@@ -349,11 +349,13 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani, const hkaAnimationBindi
 			Quat &rots = reinterpret_cast<Quat &>(trans.rotation);
 			cMat.SetRotate(rots.Conjugate());
 			cMat.SetTrans(reinterpret_cast<Point3 &>(trans.position) * IDC_EDIT_SCALE_value);
-			cMat.Scale(reinterpret_cast<Point3 &>(trans.scale));
+
+			if (!flags[IDC_CH_DISABLE_SCALE_checked])
+				cMat.Scale(reinterpret_cast<Point3 &>(trans.scale));
 
 			if (node->GetParentNode()->IsRootNode())
 				cMat *= corMat;
-			else
+			else if (!flags[IDC_CH_DISABLE_SCALE_checked])
 			{
 				Matrix3 pAbsMat = node->GetParentTM(SecToTicks(t));
 				Point3 nScale = { pAbsMat.GetRow(0).Length(), pAbsMat.GetRow(1).Length(), pAbsMat.GetRow(2).Length() };

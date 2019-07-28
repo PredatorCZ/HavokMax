@@ -17,6 +17,7 @@
 #define IDB_BITMAP3                     110
 #define IDC_CLOSEBUTTON                 1000
 #define IDC_DOSTUFF                     1000
+#define IDC_CH_FIX_SCALE                1000
 #define IDC_RB_ZX                       1001
 #define IDC_RB_ZY                       1002
 #define IDC_RB_ZZ                       1003
@@ -54,19 +55,21 @@
 #define IDC_CH_ANISKELETON              1039
 #define IDC_CH_ANIOPTIMIZE              1040
 #define IDC_CH_INVERT_RIGHT2            1041
+#define IDC_CH_DISABLE_SCALE            1041
+#define IDC_CHECK2                      1042
 #define IDC_COLOR                       1456
 #define IDC_EDIT                        1490
 #define IDC_EDIT_SCALE                  1490
 #define IDC_EDIT_CAPTUREFRAME           1491
-#define IDC_EDIT_MOTIONID               1501
 #define IDC_EDIT_ANISTART               1492
 #define IDC_EDIT_ANIEND                 1493
 #define IDC_SPIN                        1496
 #define IDC_SPIN_SCALE                  1496
 #define IDC_SPIN_CAPTUREFRAME           1497
-#define IDC_SPIN_MOTIONID               1500
 #define IDC_SPIN_ANISTART               1498
 #define IDC_SPIN_ANIEND                 1499
+#define IDC_SPIN_MOTIONID               1500
+#define IDC_EDIT_MOTIONID               1501
 
 // Next default values for new objects
 // 
@@ -74,7 +77,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        112
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_CONTROL_VALUE         1043
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

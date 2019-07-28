@@ -33,8 +33,8 @@
 #include <vector>
 #include "HavokXMLApi.hpp"
 
-#define HAVOKMAX_VERSION 1.8
-#define HAVOKMAX_VERSIONINT 180
+#define HAVOKMAX_VERSION 1.9
+#define HAVOKMAX_VERSIONINT 190
 
 extern TCHAR *GetString(int id);
 extern HINSTANCE hInstance;
@@ -57,6 +57,7 @@ public:
 		IDConfigBool(IDC_CH_ANIMATION),
 		IDConfigBool(IDC_CH_ANISKELETON),
 		IDConfigBool(IDC_CH_ANIOPTIMIZE),
+		IDConfigBool(IDC_CH_DISABLE_SCALE),
 		IDConfigVisible(IDC_CH_ANISKELETON),
 		IDConfigVisible(IDC_CH_ANIOPTIMIZE),
 		IDConfigVisible(IDC_EDIT_ANIEND),
