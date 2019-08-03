@@ -136,19 +136,23 @@ void HavokImport::LoadSkeleton(const hkaSkeleton &skel)
 			node->SetWireColor(0x80ff);
 		}
 
-		Matrix3 nodeTM = {};
-		nodeTM.SetRotate(reinterpret_cast<const Quat&>(b.transform->rotation).Conjugate());
-		nodeTM.SetTrans(reinterpret_cast<const Point3&>(b.transform->position) * IDC_EDIT_SCALE_value);
-		
-		if (b.parentID > -1)
+		if (b.transform)
 		{
-			nodes[b.parentID]->AttachChild(node);
-			nodeTM *= nodes[b.parentID]->GetNodeTM(0);
-		}
-		else
-			nodeTM *= corMat;
+			Matrix3 nodeTM = {};
+			nodeTM.SetRotate(reinterpret_cast<const Quat &>(b.transform->rotation).Conjugate());
+			nodeTM.SetTrans(reinterpret_cast<const Point3 &>(b.transform->position) * IDC_EDIT_SCALE_value);
 
-		node->SetNodeTM(0, nodeTM);
+			if (b.parentID > -1)
+			{
+				nodes[b.parentID]->AttachChild(node);
+				nodeTM *= nodes[b.parentID]->GetNodeTM(0);
+			}
+			else
+				nodeTM *= corMat;
+
+			node->SetNodeTM(0, nodeTM);
+		}
+
 		node->SetName(ToBoneName(boneName));
 		nodes.push_back(node);
 		node->SetUserPropString(skelNameHint, static_cast<TSTRING>(esString(skel)).c_str());

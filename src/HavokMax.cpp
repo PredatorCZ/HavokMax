@@ -53,7 +53,7 @@ struct PresetData
 extern HINSTANCE hInstance;
 static const TCHAR *categoryName = _T("HK_PRESET");
 static PresetData defaultPreset;
-std::vector<TSTRING> extensions = { _T("hkx"), _T("hkt") };
+std::vector<TSTRING> extensions = { _T("hkx"), _T("hkt"), _T("hka") };
 static std::vector<PresetData*> presets = { &defaultPreset };
 static HBITMAP bitmapGreen,
 	bitmapRed,

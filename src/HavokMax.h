@@ -33,8 +33,8 @@
 #include <vector>
 #include "HavokXMLApi.hpp"
 
-#define HAVOKMAX_VERSION 1.9
-#define HAVOKMAX_VERSIONINT 190
+#define HAVOKMAX_VERSION 1.10
+#define HAVOKMAX_VERSIONINT 110
 
 extern TCHAR *GetString(int id);
 extern HINSTANCE hInstance;
