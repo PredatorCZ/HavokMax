@@ -1,0 +1,52 @@
+v1.11
+- More stable library version.
+- Fixed incorrect old format additive animations.
+- Added new format additive animations.
+- Added root motion support.
+- Moved to new config format (xml schema), presets will be migrated from old config format to new.
+- External presets can be still loaded with both old version and new version format. Old format is not recommended to use anymore.
+- Added support for 2020 and 2021 versions.
+- Dropped 32bit support.
+- Added support for exporting selected items (Export/Export selected)
+v1.10
+- Fixed crash, when loading corrupted skeletons. ( #8 )
+- Added hka into file extensions.
+v1.9
+- Added "disable scale" tracks option. (#3 )
+- Added keyboard shortcuts for dialogs. (#6 )
+- Changed first dialog item focus on process buttons. (#6 )
+v1.8
+- Fixed logging for non-unicode builds (2010 - 2012).
+- Fixed crash caused by dialog for some versions (mainly 2012 as reported in #4 ).
+- Fixed plugin registration bug reported in #5.
+v1.7
+- Added support for loading version 2015 and 2017 skeletons.
+- Added support for loading version 2015 interleaved animations.
+- Added support for loading version 2015 - 2017 spline compressed animations.
+- Fixed crash, when loading animations caused by 0 scale values.
+v1.6
+- Fixed loading incorrect animation track for bone without annotation name and bind remaps.
+- Fixed loading spline compressed animations when float tracks are present.
+- Added Motion ID var into config file.
+v1.5
+- Fixed not loading of newly added external presets for first time
+- Added ability to choose animation index, in case of multiple animations in single file.
+- Added ability to load config file with suppressPrompts enabled.
+- Added ability to load bones by their hkaBone user property, in case of not being as annotation.
+- Added ability to load additive animations.
+v1.4
+- Added ability to load Spline Compressed animations.
+- Fixed issue, when loading Delta Compressed animations, only first 2 frames were processed.
+v1.3
+- Added support for loading 2016.2 toolset formats.
+- Fixed crash, when loading incomplete 2016+ formats.
+v1.2
+- Added ability to export/import animations.
+- Added Environment generation for exported file.
+- Added skeleton pose capture frame for export.
+v1.1
+- Fixed loading version 2016 files under 32bit build.
+- Fixed wrong class name links for XML exported files.
+- Maxscript listener will now show whenever plugin tries to print any information and from now on, user will be always informed properly. User no longer needs to open listener manually.
+v1
+- Initial release
