@@ -309,6 +309,11 @@ static void LoadLegacyConfig() {
 
     GetPrivateProfileString(prName_.data(), _T("Scale"), _T(""), &group[0],
                             (DWORD)group.size(), cfgpath.data());
+
+    if (!group[0]) {
+      return;
+    }
+
     auto &prData = presets[to_string(prName_)];
     prData.scale = std::stof(group);
 
