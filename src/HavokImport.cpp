@@ -228,10 +228,10 @@ void HavokImport::LoadRootMotion(const hkaAnimatedReferenceFrame *ani,
       Quat &cRotation = reinterpret_cast<Quat &>(trans.rotation.QConjugate());
       auto cTrans = reinterpret_cast<Point3 &>(trans.translation * objectScale);
       cMat.SetRotate(cRotation);
-      cMat.SetTrans(cTrans * corMat);
-      //cMat *= corMat;
+      cMat.SetTrans(cTrans);
+      auto trueTM = cMats[cTime++] * Inverse(corMat);
 
-      SetXFormPacket packet(cMats[cTime++] * cMat);
+      SetXFormPacket packet(trueTM * cMat * corMat);
 
       cnt->SetValue(SecToTicks(t), &packet);
     }
@@ -354,9 +354,9 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani,
     }
 
     if (cnt->GetRotationController()->ClassID() !=
-        Class_ID(LININTERP_ROTATION_CLASS_ID, 0)) {
+        Class_ID(HYBRIDINTERP_ROTATION_CLASS_ID, 0)) {
       cnt->SetRotationController((Control *)CreateInstance(
-          CTRL_ROTATION_CLASS_ID, Class_ID(LININTERP_ROTATION_CLASS_ID, 0)));
+          CTRL_ROTATION_CLASS_ID, Class_ID(HYBRIDINTERP_ROTATION_CLASS_ID, 0)));
     }
 
     if (cnt->GetScaleController()->ClassID() !=
@@ -418,7 +418,7 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani,
     AnimateOff();
 
     Control *rotControl = (Control *)CreateInstance(
-        CTRL_ROTATION_CLASS_ID, Class_ID(HYBRIDINTERP_ROTATION_CLASS_ID, 0));
+        CTRL_ROTATION_CLASS_ID, Class_ID(LININTERP_ROTATION_CLASS_ID, 0));
     rotControl->Copy(cnt->GetRotationController());
     cnt->GetRotationController()->Copy(rotControl);
   }
