@@ -2,7 +2,7 @@
 
 HavokMax is Havok importer/exporter for 3ds max.\
 Buildable with VS2017.\
-Supported 3ds max versions: **2010 - 2021**\
+Supported 3ds max versions: **2010 - 2022**\
 Tested on 3ds max versions: **2017**
 
 ## Building

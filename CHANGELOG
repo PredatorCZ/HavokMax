@@ -1,5 +1,6 @@
 v1.13
 - Added blend hint override.
+- Stability fixes
 - Added support for 2022 version.
 v1.12
 - Fixed specific crash when importing incomplete skeletons. (#18 )
