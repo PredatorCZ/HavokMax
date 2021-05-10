@@ -56,7 +56,7 @@ public:
   // config
   es::Flags<Checked> checked;
   es::Flags<Visible> visible;
-  int32 motionIndex;
+  int32 motionIndex, additiveOverride;
   hkToolset toolset;
   TimeValue animationStart, animationEnd, captureFrame;
   std::string currentPresetName;
@@ -106,6 +106,7 @@ class HavokMaxV2 : public HavokMax {
 public:
   HWND comboRight;
   HWND comboBack;
+  HWND comboAddOvr;
 
   void CollisionHandler();
   void UpdatePresetUI(PresetData &presetData);

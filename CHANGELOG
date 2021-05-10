@@ -1,3 +1,6 @@
+v1.13
+- Added blend hint override.
+- Added support for 2022 version.
 v1.12
 - Fixed specific crash when importing incomplete skeletons. (#18 )
 - Fixed wrong root motion rotation directions.

@@ -57,6 +57,7 @@
 #define IDC_CH_INVERT_RIGHT2            1041
 #define IDC_CH_DISABLE_SCALE            1041
 #define IDC_CHECK2                      1042
+#define IDC_CB_ADDITIVE_OVERRIDE        1043
 #define IDC_COLOR                       1456
 #define IDC_EDIT                        1490
 #define IDC_EDIT_SCALE                  1490
@@ -75,9 +76,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        112
+#define _APS_NEXT_RESOURCE_VALUE        113
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1043
+#define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

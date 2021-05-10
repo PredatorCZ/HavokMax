@@ -65,6 +65,7 @@ public:
   const TCHAR *Category() { return NULL; }
   const TCHAR *InternalName() { return _className; }
   HINSTANCE HInstance() { return hInstance; }
+  const TCHAR *NonLocalizedClassName() { return _className; }
 } HavokExportDesc;
 
 ClassDesc2 *GetHavokExportDesc() { return &HavokExportDesc; }

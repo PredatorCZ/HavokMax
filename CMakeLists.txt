@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.3)
 
-project(HavokMax VERSION 1.12)
+project(HavokMax VERSION 1.13)
 
 set (HavokLibLibraryPath ../HavokLib)
-
+set(CMAKE_CXX_STANDARD 14)
 add_subdirectory(3rd_party/HavokLib ${HavokLibLibraryPath})
 include(${PRECORE_SOURCE_DIR}/cmake/3dsmax.cmake)
 
@@ -18,7 +18,7 @@ build_target(
 		src/HavokMax.rc
 		${MAX_EX_DIR}/win/About.rc
 	LINKS
-		gdiplus bmm core HavokLib flt mesh maxutil maxscrpt paramblk2 geom MaxSDKTarget
+		gdiplus bmm core havok-objects flt mesh maxutil maxscrpt paramblk2 geom MaxSDKTarget
 	AUTHOR "Lukas Cone"
 	DESCR "Havok 3DS Max Unofficial Plugin"
 	START_YEAR 2016

@@ -53,14 +53,15 @@ public:
 
 class : public ClassDesc2 {
 public:
-  virtual int IsPublic() { return TRUE; }
-  virtual void *Create(BOOL) { return new HavokImport(); }
-  virtual const TCHAR *ClassName() { return _className; }
-  virtual SClass_ID SuperClassID() { return SCENE_IMPORT_CLASS_ID; }
-  virtual Class_ID ClassID() { return HavokImport_CLASS_ID; }
-  virtual const TCHAR *Category() { return NULL; }
-  virtual const TCHAR *InternalName() { return _className; }
-  virtual HINSTANCE HInstance() { return hInstance; }
+  int IsPublic() { return TRUE; }
+  void *Create(BOOL) { return new HavokImport(); }
+  const TCHAR *ClassName() { return _className; }
+  SClass_ID SuperClassID() { return SCENE_IMPORT_CLASS_ID; }
+  Class_ID ClassID() { return HavokImport_CLASS_ID; }
+  const TCHAR *Category() { return NULL; }
+  const TCHAR *InternalName() { return _className; }
+  HINSTANCE HInstance() { return hInstance; }
+  const TCHAR *NonLocalizedClassName() { return _className; }
 } HavokImportDesc;
 
 ClassDesc2 *GetHavokImportDesc() { return &HavokImportDesc; }
@@ -274,7 +275,11 @@ void HavokImport::LoadAnimation(const hkaAnimation *ani,
   }
 
   const auto numBones = ani->GetNumOfTransformTracks();
-  const BlendHint blendType = bind ? bind->GetBlendHint() : BlendHint::NORMAL;
+  BlendHint blendType = bind ? bind->GetBlendHint() : BlendHint::NORMAL;
+
+  if (additiveOverride) {
+    blendType = static_cast<BlendHint>(additiveOverride);
+  }
 
   std::vector<Matrix3> addTMs(numBones, true);
 

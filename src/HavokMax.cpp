@@ -43,7 +43,8 @@ const TCHAR _homePage[] =
 #include "MAXex/win/AboutDlg.h"
 
 REFLECTOR_CREATE(HavokMax, 1, VARNAMES, checked, visible, motionIndex, toolset,
-                 animationStart, animationEnd, captureFrame, currentPresetName);
+                 animationStart, animationEnd, captureFrame, currentPresetName,
+                 additiveOverride);
 
 struct PresetData : ReflectorInterface<PresetData> {
   float scale;
@@ -66,7 +67,7 @@ void SavePresets(pugi::xml_node node) {
     if (!f.second.external) {
       auto presetNode = rootNode.append_child("preset");
       presetNode.append_attribute("name").set_value(f.first.data());
-      ReflectorWrapConst<PresetData> rWrap(f.second);
+      ReflectorWrap<PresetData> rWrap(f.second);
       ReflectorXMLUtil::Save(rWrap, presetNode);
       auto corMatNode = presetNode.append_child("matrix");
       auto corMatData = GetCorrectionMatrix(f.second.corMat);
@@ -270,7 +271,7 @@ void DestroyHavokResources() {
 HavokMax::HavokMax()
     : hWnd(), comboHandle(), currentPresetName("Default"), objectScale(1.0f),
       instanceDialogType(DLGTYPE_unknown), toolset(HK500), captureFrame(),
-      motionIndex() {
+      motionIndex(), additiveOverride() {
   corMat.IdentityMatrix();
 
   Interval aniRange = GetCOREInterface()->GetAnimRange();
@@ -334,9 +335,9 @@ static void LoadLegacyConfig() {
     genName += ToTSTRING(std::to_string(p));
     TSTRING prName_;
     prName_.resize(0x102);
-    auto numReadChars =
-        GetPrivateProfileString(legacyGroup, genName.data(), _T(""), &prName_[0],
-                                (DWORD)prName_.size(), cfgpath.data());
+    auto numReadChars = GetPrivateProfileString(
+        legacyGroup, genName.data(), _T(""), &prName_[0], (DWORD)prName_.size(),
+        cfgpath.data());
 
     prName_.resize(numReadChars);
 
@@ -378,7 +379,7 @@ void HavokMax::LoadCFG() {
 
 void HavokMax::SaveCFG() {
   pugi::xml_document doc;
-  ReflectorWrapConst<HavokMax> rWrap(this);
+  ReflectorWrap<HavokMax> rWrap(this);
   ReflectorXMLUtil::Save(rWrap, doc);
   SavePresets(doc);
   auto conf = GetConfig();
@@ -967,6 +968,9 @@ INT_PTR HavokMaxV2::DlgCommandCallBack(WPARAM wParam, LPARAM lParam) {
     UpdateData();
     return TRUE;
   }
+  case IDC_CB_ADDITIVE_OVERRIDE:
+    additiveOverride = SendMessage(comboAddOvr, CB_GETCURSEL, 0, 0);
+    return TRUE;
   }
   return (INT_PTR)FALSE;
 }
@@ -989,6 +993,7 @@ void HavokMaxV2::Setup(HWND hwnd) {
   HavokMax::Setup(hwnd);
   comboBack = GetDlgItem(hWnd, IDC_CB_BACK);
   comboRight = GetDlgItem(hWnd, IDC_CB_RIGHT);
+  comboAddOvr = GetDlgItem(hWnd, IDC_CB_ADDITIVE_OVERRIDE);
 
   static const TCHAR *_items[] = {_T("Right"), _T("Back"), _T("Top")};
 
@@ -996,6 +1001,10 @@ void HavokMaxV2::Setup(HWND hwnd) {
     SendMessage(comboBack, CB_ADDSTRING, 0, (LPARAM)_items[c]);
     SendMessage(comboRight, CB_ADDSTRING, 0, (LPARAM)_items[c]);
   }
+
+  SendMessage(comboAddOvr, CB_ADDSTRING, 0, (LPARAM) _T("AUTO"));
+  SendMessage(comboAddOvr, CB_ADDSTRING, 0, (LPARAM) _T("OLD"));
+  SendMessage(comboAddOvr, CB_ADDSTRING, 0, (LPARAM) _T("NEW"));
 }
 
 static const int toEnableItemsV2[] = {
@@ -1013,6 +1022,7 @@ void HavokMaxV2::UpdatePresetUI(PresetData &data) {
   SetupFloatSpinner(hWnd, IDC_SPIN_SCALE, IDC_EDIT_SCALE, 0, 5000, objectScale);
   SetupIntSpinner(hWnd, IDC_SPIN_MOTIONID, IDC_EDIT_MOTIONID, 0,
                   numAnimations - 1, motionIndex);
+  SendMessage(comboAddOvr, CB_SETCURSEL, additiveOverride, 0);
 
   int curIndex = 0;
 
