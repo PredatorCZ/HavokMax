@@ -1,3 +1,9 @@
+This repo has been archived, because it's no longer possible to do development due to licensing issues within 3ds max (among other problems).
+
+For exhausting explanation, head to [my blog post about those issues](https://lukascone.wordpress.com/2021/06/07/da-futureh/).
+
+Further development/releases will be available in [HavokToolset](https://github.com/PredatorCZ/HavokLib/tree/master/toolset) subproject for HavokLib.
+
 # HavokMax
 
 HavokMax is Havok importer/exporter for 3ds max.\
